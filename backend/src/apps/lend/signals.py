@@ -1,6 +1,6 @@
 from django.db.models.signals import post_save
 from django.dispatch import receiver
-from models import Transaction
+from .models import Transaction
 from src.apps.common.tasks import send_user_mail
 from src.apps.notification.models import Notification
 
