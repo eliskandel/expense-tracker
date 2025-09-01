@@ -311,4 +311,4 @@ CELERY_BEAT_SCHEDULER = "django_celery_beat.schedulers:DatabaseScheduler"
 
 APPEND_SLASH = True
 
-OTP_VALID_PERIOD = config("OTP_VALID_PERIOD", default=300, cast=int)  # in seconds
+OTP_VALID_PERIOD = config("OTP_VALID_PERIOD", default=3000, cast=int)  # in seconds
