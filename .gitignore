@@ -1,0 +1,18 @@
+# ========================
+# System & IDE files
+# ========================
+# Operating system
+.DS_Store
+Thumbs.db
+
+# IDEs and editors
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+.project
+.classpath
+
+# Environment variables
+.env
+*.env
