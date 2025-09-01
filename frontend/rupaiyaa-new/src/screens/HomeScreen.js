@@ -1,74 +1,15 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useIsFocused, useNavigation } from '@react-navigation/native';
-import { LinearGradient } from 'expo-linear-gradient';
+// import { LinearGradient } from 'expo-linear-gradient';
 import { useContext, useEffect, useState } from 'react';
-import { ActivityIndicator, Dimensions, Platform, SafeAreaView, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Dimensions, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { BarChart, PieChart } from 'react-native-chart-kit';
+import CustomHeader from '../components/CustomHeader';
 import { AuthContext } from '../context/AuthContext';
 import { ThemeContext } from '../context/ThemeContext';
 const API_BASE_URL = 'http://10.40.20.94:8000';
 const screenWidth = Dimensions.get('window').width;
-const CustomHeader = ({ 
-    title, 
-    subtitle,
-    showProfileIcon = false,
-    showTotalBalance = false,
-    totalBalance = 'रू0'
-}) => {
-    const navigation = useNavigation();
-    const { isDarkMode } = useContext(ThemeContext);
-    const { userName } = useContext(AuthContext);
-
-    const displayName = userName || 'User';
-    const userInitial = displayName.charAt(0).toUpperCase();
-    const gradientColors = isDarkMode ? ['#53048bff', '#6A0DAD'] : ['#8A2BE2', '#6d0eb0ff'];
-    return (
-        <LinearGradient
-            colors={gradientColors}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-            className={`rounded-b-3xl shadow-lg z-20 pb-6 ${Platform.OS === 'android' ? 'pt-8' : ''}`}
-        >
-            <SafeAreaView>
-                <View className="flex-row justify-between items-center px-6">
-                    <View>
-                        <Text className="text-white text-lg font-medium opacity-80">{title}</Text>
-                        {subtitle && <Text className="text-white text-2xl font-bold mt-1">{subtitle}</Text>}
-                    </View>
-                    <View className="flex-row items-center">
-                        {/* Notification Icon */}
-                        <TouchableOpacity
-                            onPress={() => navigation.navigate('Notifications')}
-                            className="w-10 h-10 rounded-full bg-white bg-opacity-30 justify-center items-center mr-2"
-                        >
-                            <MaterialCommunityIcons name="bell-outline" size={24} color="white" />
-                        </TouchableOpacity>
-                        {showProfileIcon && (
-                            <TouchableOpacity
-                                onPress={() => navigation.navigate('Profile')}
-                                className="w-10 h-10 rounded-full bg-white bg-opacity-30 justify-center items-center"
-                            >
-                                <Text className="text-white font-bold text-lg">{userInitial}</Text>
-                            </TouchableOpacity>
-                        )}
-                    </View>
-                </View>
-
-                {showTotalBalance && (
-                    <View className="mt-4 px-6">
-                        <Text className="text-white text-base opacity-80">Total Balance</Text>
-                        <Text className="text-white text-4xl font-bold mt-1">{totalBalance}</Text>
-                        <View className="flex-row items-center mt-2">
-                            {/* <MaterialCommunityIcons name="trending-up" size={18} color="white" /> */}
-                            {/* <Text className="text-white ml-1 text-sm opacity-90">+12.5% from last month</Text> */}
-                        </View>
-                    </View>
-                )}
-            </SafeAreaView>
-        </LinearGradient>
-    );
-};
 
 const HomeScreen = () => {
     const { colors, isDarkMode } = useContext(ThemeContext);

@@ -1,11 +1,11 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useContext, useEffect, useState } from 'react';
-import { Text, View, ActivityIndicator, FlatList, ScrollView, TextInput, TouchableOpacity } from 'react-native';
-import { ThemeContext } from '../context/ThemeContext';
+import { ActivityIndicator, FlatList, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import CustomHeader from '../components/CustomHeader';
 import FilterModal from '../components/FilterModal';
-
+import { ThemeContext } from '../context/ThemeContext';
+const API_BASE_URL = 'http://10.40.20.94:8000';
 const HistoryScreen = () => {
     const { colors, isDarkMode } = useContext(ThemeContext);
     const [isLoading, setIsLoading] = useState(true);
@@ -20,7 +20,7 @@ const HistoryScreen = () => {
     const fetchTransactions = async () => {
         setIsLoading(true);
         setError(null);
-        const transactionsUrl = 'http://127.0.0.1:8000/expense/reports/transactions/';
+        const transactionsUrl = `${API_BASE_URL}/expense/reports/transactions/`;
         try {
             const accessToken = await AsyncStorage.getItem('access_token');
             const response = await fetch(transactionsUrl, {
