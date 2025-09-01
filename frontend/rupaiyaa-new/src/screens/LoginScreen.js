@@ -1,3 +1,4 @@
+
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
@@ -5,10 +6,12 @@ import { useContext, useState } from 'react';
 import { ActivityIndicator, Alert, Dimensions, Image, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { AuthContext } from '../context/AuthContext';
 
-const API_BASE_URL = 'http://10.40.20.94:8000';
+// !!! IMPORTANT: Ensure this matches your Django backend URL !!!
+const API_BASE_URL = 'http://10.40.20.94:8000'; // Your current API Base URL
+
 const LoginScreen = () => {
   const navigation = useNavigation();
-  const { login } = useContext(AuthContext);
+  const { login } = useContext(AuthContext); // Only passing token now
 
   const [isLoginMode, setIsLoginMode] = useState(true);
 
@@ -46,31 +49,31 @@ const LoginScreen = () => {
       setSignupProfileImage(result.assets[0].uri);
     }
   };
+
   const handleLogin = async () => {
     setLoading(true);
-    
+
     try {
       const response = await fetch(`${API_BASE_URL}/auth/login/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ username: loginEmail, password: loginPassword }),
+        body: JSON.stringify({ username: loginEmail, password: loginPassword }), // Assuming 'username' for email login
       });
 
-      // Handle non-JSON responses gracefully
       if (!response.ok) {
-        let errorMessage = `Server error: ${response.status} ${response.statusText}`;
+        let errorMessage = `Login failed: ${response.status} ${response.statusText}`;
         try {
-          // Attempt to parse JSON even on an error, as the API might send JSON errors
           const errorData = await response.json();
           if (errorData.errors && Array.isArray(errorData.errors)) {
             errorMessage = errorData.errors.map(e => e.detail || JSON.stringify(e)).join('\n');
           } else if (errorData.detail) {
             errorMessage = errorData.detail;
+          } else if (typeof errorData === 'object' && Object.keys(errorData).length > 0) {
+              errorMessage = Object.values(errorData).flat().join('\n'); // Catch generic DRF errors
           }
         } catch (jsonError) {
-            // This is the key change! If JSON parsing fails, the response was plain text.
             const plainTextError = await response.text();
             errorMessage = `Login failed: Server response was not valid JSON. Response text: "${plainTextError}"`;
         }
@@ -82,32 +85,27 @@ const LoginScreen = () => {
       const data = await response.json();
       setLoading(false);
 
-      if (data.details) {
-        console.log('Login successful, user data:', data);
-        login(
-          data.access,
-          data.details.username || loginEmail,
-          data.details.email || '',
-          data.details.image || null,
-          data.details.id
-        );
+      if (data.access) { // Expecting an 'access' token
+        console.log('Login successful, received access token.');
+        login(data.access); // Only pass the access token to AuthContext.login
         if (data.refresh) {
           await AsyncStorage.setItem('refresh_token', data.refresh);
         }
-        Alert.alert('Success', 'You are logged in!');
+        // Alert will now be shown by AuthContext after profile is fetched
       } else {
-        Alert.alert('Error', 'Login failed: Incomplete user data received.');
-        console.log('Login failed: Incomplete data received', data);
+        Alert.alert('Error', 'Login failed: Access token not received.');
+        console.log('Login failed: No access token in response', data);
       }
     } catch (error) {
       setLoading(false);
-      console.error('Network error:', error);
+      console.error('Network error during login:', error);
       Alert.alert(
         'Error',
         'Network error. Please check your internet connection or if the server is running.'
       );
     }
   };
+
   const handleSignup = async () => {
     if (signupPassword !== signupConfirmPassword) {
       Alert.alert('Error', 'Passwords do not match.');
@@ -136,8 +134,7 @@ const LoginScreen = () => {
 
       const response = await fetch(`${API_BASE_URL}/auth/register/`, {
         method: 'POST',
-        // Do NOT set Content-Type header for FormData; let fetch set it automatically
-        body: formData,
+        body: formData, // fetch will automatically set 'Content-Type': 'multipart/form-data'
       });
 
       const data = await response.json();
@@ -146,6 +143,7 @@ const LoginScreen = () => {
       if (response.status === 201) {
         Alert.alert('Success', 'Account created successfully! Please log in.');
         setIsLoginMode(true);
+        // Clear signup form fields
         setSignupFirstName('');
         setSignupLastName('');
         setSignupUsername('');
@@ -160,7 +158,7 @@ const LoginScreen = () => {
           errorMessage = data.errors.map(e => e.detail || JSON.stringify(e)).join('\n');
         } else if (data.detail) {
           errorMessage = data.detail;
-        } else if (typeof data === 'object') {
+        } else if (typeof data === 'object' && Object.keys(data).length > 0) {
           errorMessage = Object.values(data).flat().join('\n');
         }
         Alert.alert('Error', errorMessage);
@@ -168,7 +166,7 @@ const LoginScreen = () => {
       }
     } catch (error) {
       setLoading(false);
-      console.error('Network error:', error);
+      console.error('Network error during signup:', error);
       Alert.alert(
         'Error',
         'Network error. Make sure your server is running and accessible.'
@@ -277,9 +275,9 @@ const LoginScreen = () => {
           onPress={pickImage}
         >
           {signupProfileImage ? (
-            <Image 
-              source={{ uri: signupProfileImage }} 
-              className="w-12 h-12 rounded-full mr-4" 
+            <Image
+              source={{ uri: signupProfileImage }}
+              className="w-12 h-12 rounded-full mr-4"
             />
           ) : (
             <Text className="text-gray-500">Choose Profile Image</Text>
@@ -314,13 +312,13 @@ const LoginScreen = () => {
 
           {/* Login/Sign Up Tabs */}
           <View className="flex-row rounded-full p-1 bg-gray-200 mb-6">
-            <TouchableOpacity 
+            <TouchableOpacity
               className={`flex-1 items-center py-2 px-4 rounded-full ${isLoginMode ? 'bg-white shadow' : ''}`}
               onPress={() => setIsLoginMode(true)}
             >
               <Text className={`font-semibold ${isLoginMode ? 'text-purple-700' : 'text-gray-500'}`}>Login</Text>
             </TouchableOpacity>
-            <TouchableOpacity 
+            <TouchableOpacity
               className={`flex-1 items-center py-2 px-4 rounded-full ${!isLoginMode ? 'bg-white shadow' : ''}`}
               onPress={() => setIsLoginMode(false)}
             >

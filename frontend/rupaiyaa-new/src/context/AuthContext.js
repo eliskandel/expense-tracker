@@ -1,40 +1,40 @@
-// rupaiyaa-new/src/context/AuthContext.js (USE THE VERSION YOU PROVIDED LAST)
+// rupaiyaa-new/src/context/AuthContext.js
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createContext, useEffect, useState } from 'react';
 import { ActivityIndicator, Text, View, Alert } from 'react-native';
-// Updated import: getUserDetails instead of getUserProfile
-import { getUserDetails, updateProfile as apiUpdateProfile } from '../api/apiService';
+import { getUserDetails, updateProfile } from '../api/apiService';
 
 export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
     const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
+    const [isUpdating, setIsUpdating] = useState(false);
     const [userName, setUserName] = useState(null);
     const [userEmail, setUserEmail] = useState(null);
     const [fullName, setFullName] = useState(null);
     const [profileImage, setProfileImage] = useState(null);
-    const [id, setId] = useState(null); // The user ID is crucial now
+    const [id, setId] = useState(null);
     const [error, setError] = useState(null);
 
-    // Reintroduced: Function to fetch user profile from the backend using /auth/details/
     const fetchUserProfile = async () => {
-        setError(null); // Clear previous errors
+        setError(null);
+        setIsUpdating(true);
         try {
-            const data = await getUserDetails(); // Call the new getUserDetails API service
+            const data = await getUserDetails();
             setUserName(data.username);
             setUserEmail(data.email);
-            // Assuming 'full_name' or 'first_name' and 'last_name' from /auth/details/ response
-            const userFullName = data.full_name || (data.first_name && data.last_name ? `${data.first_name} ${data.last_name}` : data.username);
+            const userFullName = data.first_name && data.last_name ? `${data.first_name} ${data.last_name}` : data.username;
             setFullName(userFullName);
-            setProfileImage(data.profile_picture || null); // Assuming 'profile_picture' from backend
-            setId(data.id || null); // Ensure ID is set from backend response
+            // CORRECTED: Use data.image as per your API response
+            setProfileImage(data.image || null);
+            setId(data.id || null);
 
-            // Update local storage with potentially new or confirmed data
             await AsyncStorage.setItem('user_name', data.username);
             await AsyncStorage.setItem('user_email', data.email);
             if (userFullName) await AsyncStorage.setItem('full_name', userFullName);
-            if (data.profile_picture) await AsyncStorage.setItem('profile_image', data.profile_picture);
+            // CORRECTED: Use data.image for AsyncStorage
+            if (data.image) await AsyncStorage.setItem('profile_image', data.image);
             if (data.id) await AsyncStorage.setItem('user_id', String(data.id));
 
             return data;
@@ -42,7 +42,6 @@ export const AuthProvider = ({ children }) => {
             console.error('AuthContext: Error fetching user profile:', e.response?.data || e.message);
             setError(e.response?.data?.detail || 'Failed to fetch profile data.');
 
-            // Even if API fetch fails, try to load from local storage as a fallback
             const storedUserName = await AsyncStorage.getItem('user_name');
             const storedUserEmail = await AsyncStorage.getItem('user_email');
             const storedFullName = await AsyncStorage.getItem('full_name');
@@ -55,30 +54,32 @@ export const AuthProvider = ({ children }) => {
             setProfileImage(storedProfileImage);
             setId(storedId);
 
-            throw e; // Re-throw to be caught by calling component if needed
+            throw e;
+        } finally {
+            setIsUpdating(false);
         }
     };
 
-    // Function to update user profile via the backend (remains the same)
-    const updateProfile = async (profileData) => {
-        setIsLoading(true);
+    const updateProfileData = async (profileData) => {
+        setIsUpdating(true);
         setError(null);
         if (!id) {
             setError('User ID is missing. Cannot update profile.');
-            setIsLoading(false);
+            setIsUpdating(false);
             return;
         }
         try {
-            const data = await apiUpdateProfile(id, profileData);
+            const data = await updateProfile(id, profileData);
             setUserName(data.username);
-            // Assuming 'full_name' or 'first_name' and 'last_name' from update response
-            const updatedUserFullName = data.full_name || (data.first_name && data.last_name ? `${data.first_name} ${data.last_name}` : data.username);
+            const updatedUserFullName = data.first_name && data.last_name ? `${data.first_name} ${data.last_name}` : data.username;
             setFullName(updatedUserFullName);
-            setProfileImage(data.profile_picture || null);
+            // CORRECTED: Use data.image for update response
+            setProfileImage(data.image || null);
 
             await AsyncStorage.setItem('user_name', data.username);
             await AsyncStorage.setItem('full_name', updatedUserFullName);
-            if (data.profile_picture) await AsyncStorage.setItem('profile_image', data.profile_picture);
+            // CORRECTED: Use data.image for AsyncStorage
+            if (data.image) await AsyncStorage.setItem('profile_image', data.image);
 
             Alert.alert('Success', 'Profile updated successfully!');
             return data;
@@ -87,7 +88,7 @@ export const AuthProvider = ({ children }) => {
             setError(e.response?.data?.detail || e.response?.data?.username?.[0] || 'Failed to update profile.');
             throw e;
         } finally {
-            setIsLoading(false);
+            setIsUpdating(false);
         }
     };
 
@@ -97,7 +98,6 @@ export const AuthProvider = ({ children }) => {
                 const accessToken = await AsyncStorage.getItem('access_token');
                 if (accessToken) {
                     setIsLoggedIn(true);
-                    // Crucial: Call fetchUserProfile to get full user details from backend
                     await fetchUserProfile();
                 } else {
                     setIsLoggedIn(false);
@@ -110,7 +110,6 @@ export const AuthProvider = ({ children }) => {
             } catch (e) {
                 console.error('AuthContext: Failed to load auth data or fetch profile on app start', e);
                 setError(e.message || 'Failed to initialize authentication.');
-                // Fallback to local storage if API fails
                 const storedUserName = await AsyncStorage.getItem('user_name');
                 const storedUserEmail = await AsyncStorage.getItem('user_email');
                 const storedFullName = await AsyncStorage.getItem('full_name');
@@ -132,19 +131,16 @@ export const AuthProvider = ({ children }) => {
             }
         };
         checkLoginStatus();
-    }, []); // Run once on component mount
+    }, []);
 
-    const login = async (token, userData) => {
+    const login = async (token) => {
         setIsLoading(true);
         setError(null);
-        console.log('AuthContext: Attempting to log in with user ID:', userData?.id);
         try {
             await AsyncStorage.setItem('access_token', token);
             setIsLoggedIn(true);
-            // Crucial: After login token is set, fetch full profile data from backend
             await fetchUserProfile();
-            Alert.alert('Success', 'You are logged in!'); // Moved this alert here after profile data is loaded
-
+            Alert.alert('Success', 'You are logged in!');
         } catch (e) {
             console.error('AuthContext: Failed to save data to storage or fetch profile after login', e);
             setError('Login successful, but failed to load profile data.');
@@ -203,10 +199,10 @@ export const AuthProvider = ({ children }) => {
             fullName,
             profileImage,
             id,
-            isLoading,
+            isLoading: isUpdating,
             error,
-            fetchUserProfile, // Make fetchUserProfile available for other components if needed
-            updateProfile,
+            fetchUserProfile,
+            updateProfile: updateProfileData,
         }}>
             {children}
         </AuthContext.Provider>

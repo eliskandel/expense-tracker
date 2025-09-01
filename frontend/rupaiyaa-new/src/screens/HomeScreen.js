@@ -85,7 +85,7 @@ const HomeScreen = () => {
         setError(null);
         try {
             const accessToken = await AsyncStorage.getItem('access_token');
-            const response = await fetch('/expense/report/', {
+            const response = await fetch(`${API_BASE_URL}/expense/report/`, {
                 headers: {
                     'Authorization': `Bearer ${accessToken}`,
                     'Content-Type': 'application/json',

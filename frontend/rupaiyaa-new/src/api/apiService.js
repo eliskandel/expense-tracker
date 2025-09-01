@@ -1,95 +1,107 @@
-// rupaiyaa-new/src/api/apiService.js (REVERTED TO A PREVIOUS STATE FOR NOW)
-import axios from 'axios';
+// rupaiyaa-new/src/api/apiService.js
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// !!! IMPORTANT: Replace with your actual Django backend URL !!!
-const API_BASE_URL = 'http://10.40.20.94:8000'; // Your current API Base URL
+// !!! IMPORTANT: Ensure this matches your Django backend URL !!!
+const API_BASE_URL = 'http://10.40.20.94:8000';
 
-const api = axios.create({
-    baseURL: API_BASE_URL,
-    headers: {
+// Helper function for making authenticated fetch requests
+const authenticatedFetch = async (url, options = {}) => {
+    const token = await AsyncStorage.getItem('access_token');
+    const headers = {
+        // Default to application/json, but allow override for FormData
         'Content-Type': 'application/json',
-    },
-});
+        ...options.headers,
+    };
 
-// Request interceptor to attach JWT token for authenticated requests
-api.interceptors.request.use(
-    async (config) => {
-        const token = await AsyncStorage.getItem('access_token');
-        if (token) {
-            config.headers.Authorization = `Bearer ${token}`;
+    if (token) {
+        headers.Authorization = `Bearer ${token}`;
+    }
+
+    // If Content-Type is explicitly set to undefined (for FormData), remove it
+    if (headers['Content-Type'] === undefined) {
+        delete headers['Content-Type'];
+    }
+
+    const response = await fetch(`${API_BASE_URL}${url}`, {
+        ...options,
+        headers,
+    });
+
+    if (!response.ok) {
+        let errorData = {};
+        try {
+            errorData = await response.json(); // Try to parse JSON error
+        } catch (e) {
+            // If JSON parsing fails, use plain text response
+            errorData = { detail: await response.text() };
         }
-        return config;
-    },
-    (error) => {
-        return Promise.reject(error);
-    }
-);
-
-// This endpoint '/api/profile/' will likely result in a 404 based on our previous discussion.
-// We will address the actual /auth/details/ fetch in AuthContext directly.
-export const getUserProfile = async () => {
-    try {
-        const response = await api.get('/api/profile/');
-        return response.data;
-    } catch (error) {
-        console.error('Error fetching user profile:', error.response?.data || error.message);
+        const error = new Error(errorData.detail || `API Error: ${response.status} - ${response.statusText}`);
+        error.response = { status: response.status, data: errorData }; // Attach response details
         throw error;
     }
+
+    // Check if response has content before parsing JSON
+    const text = await response.text();
+    return text ? JSON.parse(text) : {}; // Return empty object for 204 No Content
 };
 
-// This uses userId as we previously confirmed for /auth/update/{id}/
+// GET /auth/details/
+export const getUserDetails = async () => {
+    return authenticatedFetch('/auth/details/', {
+        method: 'GET',
+    });
+};
+
+// PATCH /auth/update/{id}/ for profile updates (username, full_name, theme_preference)
 export const updateProfile = async (userId, profileData) => {
-    try {
-        const response = await api.patch(`/auth/update/${userId}/`, profileData);
-        return response.data;
-    } catch (error) {
-        console.error('Error updating user profile:', error.response?.data || error.message);
-        throw error;
+    if (!userId) {
+        throw new Error('User ID is required for updating the profile.');
     }
+    return authenticatedFetch(`/auth/update/${userId}/`, {
+        method: 'PATCH',
+        body: JSON.stringify(profileData),
+    });
 };
 
-// Password change endpoint (unchanged from earlier, assume it's correct)
+// POST /auth/change/password/
 export const updatePassword = async (passwordData) => {
-    try {
-        const response = await api.post('/api/change-password/', passwordData);
-        return response.data;
-    } catch (error) {
-        console.error('Error changing password:', error.response?.data || error.message);
-        throw error;
-    }
+    return authenticatedFetch('/auth/change/password/', {
+        method: 'POST',
+        body: JSON.stringify(passwordData),
+    });
 };
 
-// Upload Profile Image (uses userId for /auth/update/{id}/)
+// PATCH /auth/update/{id}/ for profile picture upload
 export const uploadProfileImage = async (userId, imageData) => {
-    try {
-        const formData = new FormData();
-        formData.append('profile_picture', {
-            uri: imageData.uri,
-            name: imageData.fileName || 'profile.jpg',
-            type: imageData.type || 'image/jpeg',
-        });
-
-        const response = await api.patch(`/auth/update/${userId}/`, formData, {
-            headers: {
-                'Content-Type': 'multipart/form-data',
-            },
-        });
-        return response.data;
-    } catch (error) {
-        console.error('Error uploading profile image:', error.response?.data || error.message);
-        throw error;
+    if (!userId) {
+        throw new Error('User ID is required for uploading profile picture.');
     }
+    const formData = new FormData();
+    formData.append('profile_picture', { // 'profile_picture' must match your Django field name
+        uri: imageData.uri,
+        name: imageData.fileName || 'profile.jpg',
+        type: imageData.type || 'image/jpeg',
+    });
+
+    return authenticatedFetch(`/auth/update/${userId}/`, {
+        method: 'PATCH',
+        headers: {
+            'Content-Type': undefined, // Crucial: Let fetch handle Content-Type for FormData
+        },
+        body: formData,
+    });
 };
 
-// REVERTED: Theme preference to use a generic endpoint (which will likely still 404)
-// We will fix this once you provide the correct endpoint for theme preference.
-export const updateThemePreference = async (themePreference) => {
-    try {
-        const response = await api.patch('/api/profile/', { theme_preference: themePreference });
-        return response.data;
-    } catch (error) {
-        console.error('Error updating theme preference:', error.response?.data || error.message);
-        throw error;
+// PATCH /auth/update/{id}/ for theme preference
+export const updateThemePreference = async (userId, themePreference) => {
+    if (!userId) {
+        throw new Error('User ID is required for updating theme preference.');
     }
+    return authenticatedFetch(`/auth/update/${userId}/`, {
+        method: 'PATCH',
+        body: JSON.stringify({ theme_preference: themePreference }), // Adjust field name if different in Django
+    });
 };
+
+// Note: Login, Logout, Register are handled directly in LoginScreen/AuthContext via raw fetch,
+// as they often don't need the authenticatedFetch helper before a token exists.
