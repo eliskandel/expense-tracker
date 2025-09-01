@@ -2,7 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
 import { useContext, useState } from 'react';
-import { ActivityIndicator, Alert, Image, ScrollView, Text, TextInput, TouchableOpacity, View, } from 'react-native';
+import { ActivityIndicator, Alert, Dimensions, Image, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { AuthContext } from '../context/AuthContext';
 
 const API_BASE_URL = 'http://10.40.20.94:8000';
@@ -289,6 +289,10 @@ const LoginScreen = () => {
     </View>
   );
 
+  // Responsive logo size
+  const screenWidth = Dimensions.get('window').width;
+  const logoSize = Math.max(48, Math.min(80, screenWidth * 0.18)); // min 48, max 80, 18vw
+
   return (
     <View className="flex-1 p-6 bg-gray-100">
       <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', alignItems: 'center' }}>
@@ -297,7 +301,7 @@ const LoginScreen = () => {
           <View className="items-center mb-6">
             <Image
               source={require('../../assets/Expense Tracer.png')}
-              className="w-16 h-16" // Adjusted class for smaller size
+              style={{ width: logoSize, height: logoSize, maxWidth: 80, maxHeight: 80 }}
               resizeMode="contain"
             />
             <Text className="text-2xl font-bold text-purple-700 mt-2">
