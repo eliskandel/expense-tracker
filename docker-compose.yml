@@ -54,13 +54,3 @@ services:
       - CELERY_BROKER_URL=redis://redis:6379/0
       - CELERY_RESULT_BACKEND=redis://redis:6379/0
 
-  frontend:
-    build:
-      context: .
-      dockerfile: frontend/rupaiyaa-new/Dockerfile
-    container_name: react_native_frontend
-    ports:
-      - "8081:8081"
-    volumes:
-      - ./frontend/rupaiyaa-new:/app
-    command: npx react-native start
