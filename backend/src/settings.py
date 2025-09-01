@@ -52,6 +52,7 @@ INSTALLED_APPS = [
     "src.apps.common",
     "src.apps.income",
     "src.apps.expense",
+    "src.apps.budget"
   
 ]
 
