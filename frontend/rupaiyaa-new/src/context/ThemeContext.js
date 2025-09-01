@@ -1,14 +1,13 @@
-// rupaiyaa-new/src/context/ThemeContext.js (REVERTED TO A PREVIOUS STATE FOR NOW)
-import React, { createContext, useState, useEffect } from 'react';
+import React, { createContext, useState, useEffect, useContext } from 'react';
 import { useColorScheme, Appearance } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-// Removed updateThemePreference import as we're reverting backend calls for now.
-// Removed AuthContext import.
+import { updateThemePreference } from '../api/apiService';
+import { AuthContext } from './AuthContext'; // Import AuthContext
 
 export const ThemeContext = createContext();
 
 export const ThemeProvider = ({ children }) => {
-    // Removed useContext(AuthContext)
+    // Removed direct destructuring of userId and isLoggedIn here to avoid early access
     const systemColorScheme = useColorScheme();
     const [isDarkMode, setIsDarkMode] = useState(systemColorScheme === 'dark');
 
@@ -35,6 +34,7 @@ export const ThemeProvider = ({ children }) => {
 
     const colors = isDarkMode ? darkColors : lightColors;
 
+    // Load theme preference from AsyncStorage on component mount
     useEffect(() => {
         const loadThemePreference = async () => {
             try {
@@ -51,6 +51,7 @@ export const ThemeProvider = ({ children }) => {
         loadThemePreference();
     }, []);
 
+    // Toggle theme and update locally and on backend
     const toggleTheme = async () => {
         const newMode = !isDarkMode;
         setIsDarkMode(newMode);
@@ -58,12 +59,23 @@ export const ThemeProvider = ({ children }) => {
             await AsyncStorage.setItem('themePreference', newMode ? 'dark' : 'light');
             console.log('ThemeContext: Saved theme preference locally:', newMode ? 'dark' : 'light');
 
-            // REVERTED: No backend call for theme preference for now.
-            // This avoids the 'AxiosError' until we define the correct endpoint.
-            // You'll still see the local storage message, but no backend API call.
+            // MOVED: Get userId and isLoggedIn from AuthContext *inside* toggleTheme
+            // This ensures AuthContext is fully initialized when toggleTheme is called
+            const { id: userId, isLoggedIn } = useContext(AuthContext);
 
+            // Only attempt to update backend if user is logged in and userId is available
+            if (isLoggedIn && userId) {
+                await updateThemePreference(userId, newMode ? 'dark' : 'light'); // Pass userId
+                console.log('ThemeContext: Sent theme preference to backend.');
+            } else {
+                console.warn('ThemeContext: Not logged in or userId missing, skipping backend theme update.');
+            }
         } catch (e) {
-            console.error('ThemeContext: Failed to save theme preference locally:', e);
+            console.error('ThemeContext: Failed to save theme preference locally or to backend:', e.response?.data || e.message);
+            // Optionally, revert theme if backend update fails and provide feedback
+            // setIsDarkMode(!newMode);
+            // AsyncStorage.setItem('themePreference', !newMode ? 'dark' : 'light');
+            // Alert.alert('Error', 'Failed to update theme preference on server.');
         }
     };
 

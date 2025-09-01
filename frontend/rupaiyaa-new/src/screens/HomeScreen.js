@@ -284,71 +284,86 @@ const HomeScreen = () => {
                         </View>
                     </View>
 
-                    {/* Expense Analysis/Daily Spending */}
-                    <View className={`${isDarkMode ? 'bg-gray-900' : 'bg-white'} p-4 rounded-xl shadow-sm mb-6`}>
-                        <View className="flex-row items-center mb-4">
-                            <MaterialCommunityIcons name="chart-bar" size={24} color={isDarkMode ? '#D1D5DB' : '#6B7280'} />
-                            <Text className={`text-lg font-semibold ml-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Daily Spending</Text>
-                        </View>
-                        {Array.isArray(dailySpendingData.labels) && Array.isArray(dailySpendingData.datasets) && dailySpendingData.labels.length > 0 && dailySpendingData.datasets[0].data.length > 0 ? (
-                            <View style={{ overflow: 'hidden', borderRadius: 16 }}>
-                                <BarChart
-                                    data={dailySpendingData}
-                                    width={screenWidth - 48}
-                                    height={220}
-                                    yAxisLabel="रू"
-                                    fromZero={true}
-                                    showValuesOnTopOfBars={true}
-                                    chartConfig={{
-                                        backgroundColor: isDarkMode ? '#1F2937' : '#ffffff',
-                                        backgroundGradientFrom: isDarkMode ? '#1F2937' : '#ffffff',
-                                        backgroundGradientTo: isDarkMode ? '#1F2937' : '#ffffff',
-                                        decimalPlaces: 0,
-                                        color: (opacity = 1) => `rgba(138, 43, 226, ${opacity})`,
-                                        labelColor: (opacity = 1) => `rgba(107, 114, 128, ${opacity})`,
-                                        propsForBackgroundLines: {
-                                            strokeDasharray: '',
-                                            stroke: isDarkMode ? '#4B5563' : '#E5E7EB',
-                                        },
-                                        barPercentage: 0.7,
-                                    }}
-                                    style={{ borderRadius: 0 }}
-                                />
+                    {/* Analytics Slider: BarChart, PieChart, Lent Money */}
+                    <ScrollView
+                        horizontal
+                        pagingEnabled
+                        showsHorizontalScrollIndicator={false}
+                        style={{ marginBottom: 24 }}
+                    >
+                        {/* BarChart Slide */}
+                        <View style={{ width: screenWidth - 48, marginRight: 16 }} className={`${isDarkMode ? 'bg-gray-900' : 'bg-white'} p-4 rounded-xl shadow-sm`}>
+                            <View className="flex-row items-center mb-4">
+                                <MaterialCommunityIcons name="chart-bar" size={24} color={isDarkMode ? '#D1D5DB' : '#6B7280'} />
+                                <Text className={`text-lg font-semibold ml-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Daily Spending</Text>
                             </View>
-                        ) : (
-                            <Text className={`text-center ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>No daily spending data available</Text>
-                        )}
-                    </View>
-
-                    {/* Pie Chart for Expense Breakdown */}
-                    <View className={`${isDarkMode ? 'bg-gray-900' : 'bg-white'} p-4 rounded-xl shadow-sm mb-6`}>
-                        <View className="flex-row items-center mb-4">
-                            <MaterialCommunityIcons name="chart-pie" size={24} color={isDarkMode ? '#D1D5DB' : '#6B7280'} />
-                            <Text className={`text-lg font-semibold ml-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Expense Breakdown</Text>
+                            {Array.isArray(dailySpendingData.labels) && Array.isArray(dailySpendingData.datasets) && dailySpendingData.labels.length > 0 && dailySpendingData.datasets[0].data.length > 0 ? (
+                                <View style={{ overflow: 'hidden', borderRadius: 16 }}>
+                                    <BarChart
+                                        data={dailySpendingData}
+                                        width={screenWidth - 80}
+                                        height={220}
+                                        yAxisLabel="रू"
+                                        fromZero={true}
+                                        showValuesOnTopOfBars={true}
+                                        chartConfig={{
+                                            backgroundColor: isDarkMode ? '#1F2937' : '#ffffff',
+                                            backgroundGradientFrom: isDarkMode ? '#1F2937' : '#ffffff',
+                                            backgroundGradientTo: isDarkMode ? '#1F2937' : '#ffffff',
+                                            decimalPlaces: 0,
+                                            color: (opacity = 1) => `rgba(138, 43, 226, ${opacity})`,
+                                            labelColor: (opacity = 1) => `rgba(107, 114, 128, ${opacity})`,
+                                            propsForBackgroundLines: {
+                                                strokeDasharray: '',
+                                                stroke: isDarkMode ? '#4B5563' : '#E5E7EB',
+                                            },
+                                            barPercentage: 0.7,
+                                        }}
+                                        style={{ borderRadius: 0 }}
+                                    />
+                                </View>
+                            ) : (
+                                <Text className={`text-center ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>No daily spending data available</Text>
+                            )}
                         </View>
-                        {Array.isArray(expenseBreakdown) && expenseBreakdown.length > 0 ? (
-                            <PieChart
-                                data={expenseBreakdown.map(item => ({
-                                    name: item.name,
-                                    amount: item.amount,
-                                    color: item.color || '#A78BFA',
-                                    legendFontColor: isDarkMode ? '#F3F4F6' : '#1E293B',
-                                    legendFontSize: 12
-                                }))}
-                                width={screenWidth - 48}
-                                height={180}
-                                chartConfig={{
-                                    color: (opacity = 1) => `rgba(124, 58, 237, ${opacity})`,
-                                }}
-                                accessor="amount"
-                                backgroundColor="transparent"
-                                paddingLeft={"15"}
-                                absolute
-                            />
-                        ) : (
-                            <Text className={`text-center ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>No expense breakdown data available</Text>
-                        )}
-                    </View>
+                        {/* PieChart Slide */}
+                        <View style={{ width: screenWidth - 48, marginRight: 16 }} className={`${isDarkMode ? 'bg-gray-900' : 'bg-white'} p-4 rounded-xl shadow-sm`}>
+                            <View className="flex-row items-center mb-4">
+                                <MaterialCommunityIcons name="chart-pie" size={24} color={isDarkMode ? '#D1D5DB' : '#6B7280'} />
+                                <Text className={`text-lg font-semibold ml-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Expense Breakdown</Text>
+                            </View>
+                            {Array.isArray(expenseBreakdown) && expenseBreakdown.length > 0 ? (
+                                <PieChart
+                                    data={expenseBreakdown.map(item => ({
+                                        name: item.name,
+                                        amount: item.amount,
+                                        color: item.color || '#A78BFA',
+                                        legendFontColor: isDarkMode ? '#F3F4F6' : '#1E293B',
+                                        legendFontSize: 12
+                                    }))}
+                                    width={screenWidth - 80}
+                                    height={180}
+                                    chartConfig={{
+                                        color: (opacity = 1) => `rgba(124, 58, 237, ${opacity})`,
+                                    }}
+                                    accessor="amount"
+                                    backgroundColor="transparent"
+                                    paddingLeft={"15"}
+                                    absolute
+                                />
+                            ) : (
+                                <Text className={`text-center ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>No expense breakdown data available</Text>
+                            )}
+                        </View>
+                        {/* Lent Money Slide (Placeholder) */}
+                        <View style={{ width: screenWidth - 48 }} className={`${isDarkMode ? 'bg-gray-900' : 'bg-white'} p-4 rounded-xl shadow-sm`}>
+                            <View className="flex-row items-center mb-4">
+                                <MaterialCommunityIcons name="hand-coin-outline" size={24} color={isDarkMode ? '#D1D5DB' : '#6B7280'} />
+                                <Text className={`text-lg font-semibold ml-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Lent Money</Text>
+                            </View>
+                            <Text className={`text-center ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Lent money analytics coming soon...</Text>
+                        </View>
+                    </ScrollView>
 
                     {/* Set Budget Goal Button & Budget Cards Section (moved here) */}
                     <View className="mb-4">

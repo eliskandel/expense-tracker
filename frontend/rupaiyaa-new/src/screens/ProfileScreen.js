@@ -1,3 +1,4 @@
+// rupaiyaa-new/src/screens/ProfileScreen.js
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useContext } from 'react';
 import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
@@ -13,19 +14,17 @@ const getInitial = (name) => {
 
 const ProfileScreen = () => {
     const { isDarkMode, colors, toggleTheme } = useContext(ThemeContext);
-    // Re-added fetchUserProfile to be destructured here
-    const { userName, fullName, userEmail, profileImage, logout, isLoading, error, fetchUserProfile, id } = useContext(AuthContext);
+    const { userName, fullName, userEmail, profileImage, logout, isLoading: authLoading, error: authError, fetchUserProfile, id } = useContext(AuthContext);
 
     const [isEditModalVisible, setIsEditModalVisible] = useState(false);
 
-    // Reintroduced: Fetch user profile on component mount and when modal closes
+    // Fetch user profile on component mount and when modal closes
     useEffect(() => {
         // Only fetch if not already loading and if the user is logged in
-        if (!isLoading && id) { // Check for id to ensure a user is actually logged in
+        if (!authLoading && id) {
             fetchUserProfile();
         }
-    }, [isEditModalVisible, id]); // Re-fetch when modal visibility changes OR when user ID changes (e.g., after login)
-
+    }, [isEditModalVisible, id, authLoading]); // Re-fetch when modal visibility changes OR when user ID or authLoading changes
 
     const containerStyle = isDarkMode ? 'bg-gray-800' : 'bg-gray-100';
     const cardBgColor = isDarkMode ? 'bg-gray-700' : 'bg-white';
@@ -33,7 +32,8 @@ const ProfileScreen = () => {
     const subtextStyle = isDarkMode ? 'text-gray-400' : 'text-gray-600';
     const iconColor = colors.subtext;
 
-    if (isLoading && !id) { // If loading AND no user ID yet, show full screen loader
+    // Show a full-screen loader only if AuthContext is loading initially and no ID is present
+    if (authLoading && !id) {
         return (
             <View className={`flex-1 justify-center items-center ${containerStyle}`}>
                 <ActivityIndicator size="large" color={colors.primary} />
@@ -42,10 +42,11 @@ const ProfileScreen = () => {
         );
     }
 
-    if (error && !id) { // If an error exists and we don't have basic profile info, show error screen
+    // Show an error screen if AuthContext has an error and no ID is present
+    if (authError && !id) {
         return (
             <View className={`flex-1 justify-center items-center ${containerStyle}`}>
-                <Text className="text-red-500 text-lg mb-4">{error}</Text>
+                <Text className="text-red-500 text-lg mb-4">{authError}</Text>
                 <TouchableOpacity onPress={fetchUserProfile} className="bg-purple-700 p-3 rounded-xl">
                     <Text className="text-white font-semibold">Retry</Text>
                 </TouchableOpacity>
