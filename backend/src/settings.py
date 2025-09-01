@@ -50,7 +50,8 @@ INSTALLED_APPS = [
     #apps
     "src.apps.auth",
     "src.apps.common",
-    
+    "src.apps.income",
+  
 ]
 
 MIDDLEWARE = [

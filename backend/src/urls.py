@@ -21,6 +21,8 @@ urlpatterns = [
         name="redoc",
     ),
                         path("auth/", include("src.apps.auth.urls")),
+                        path("common/", include("src.apps.common.urls")),
+                        path("income/", include("src.apps.income.urls")),
                         
 
 
