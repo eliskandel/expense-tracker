@@ -23,9 +23,7 @@ urlpatterns = [
                         path("auth/", include("src.apps.auth.urls")),
                         path("income/", include("src.apps.income.urls")),
                         path("expense/", include("src.apps.expense.urls")),
-                        
-
-
+                        path("budget/", include("src.apps.budget.urls")),
 ]
 
 urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
