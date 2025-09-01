@@ -3,7 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useIsFocused, useNavigation } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useContext, useEffect, useState } from 'react';
-import { ActivityIndicator, Dimensions, FlatList, Platform, SafeAreaView, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Dimensions, Platform, SafeAreaView, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { BarChart, PieChart } from 'react-native-chart-kit';
 import { AuthContext } from '../context/AuthContext';
 import { ThemeContext } from '../context/ThemeContext';
@@ -87,6 +87,32 @@ const HomeScreen = () => {
     });
     const [budgets, setBudgets] = useState([]);
     const [budgetsLoading, setBudgetsLoading] = useState(true);
+    const [deletingBudgetId, setDeletingBudgetId] = useState(null);
+
+    // Delete budget handler
+    const handleDeleteBudget = async (budgetId) => {
+        setDeletingBudgetId(budgetId);
+        try {
+            const accessToken = await AsyncStorage.getItem('access_token');
+            const response = await fetch(`${API_BASE_URL}/budget/budgets/${budgetId}/`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${accessToken}`,
+                    'Content-Type': 'application/json',
+                },
+            });
+            if (response.ok) {
+                setBudgets((prev) => prev.filter((b) => b.id !== budgetId));
+            } else {
+                const errorData = await response.text();
+                alert(`Failed to delete budget: ${response.status} - ${errorData}`);
+            }
+        } catch (e) {
+            alert('Error deleting budget.');
+        } finally {
+            setDeletingBudgetId(null);
+        }
+    };
 
     const fetchDashboardData = async () => {
         setIsLoading(true);
@@ -208,8 +234,16 @@ const HomeScreen = () => {
                     <View>
                         <Text className="font-bold text-base text-gray-800">{item.category?.name || 'All Categories'}</Text>
                     </View>
-                    <TouchableOpacity>
-                        <MaterialCommunityIcons name="delete-outline" size={20} color="#EF4444" />
+                    <TouchableOpacity
+                        onPress={() => handleDeleteBudget(item.id)}
+                        disabled={deletingBudgetId === item.id}
+                        style={{ opacity: deletingBudgetId === item.id ? 0.5 : 1 }}
+                    >
+                        {deletingBudgetId === item.id ? (
+                            <ActivityIndicator size={20} color="#EF4444" />
+                        ) : (
+                            <MaterialCommunityIcons name="delete-outline" size={20} color="#EF4444" />
+                        )}
                     </TouchableOpacity>
                 </View>
                 <View className="flex-row items-center mb-1">
@@ -385,19 +419,13 @@ const HomeScreen = () => {
                         </View>
                     </View>
 
-                    {/* Expense Breakdown */}
+                    {/* Lent Money Section (moved here) */}
                     <View className={`${isDarkMode ? 'bg-gray-900' : 'bg-white'} p-4 rounded-xl shadow-sm mb-6`}>
-                        <Text className={`text-lg font-semibold mb-4 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Expense Breakdown</Text>
-                        {Array.isArray(expenseBreakdown) && expenseBreakdown.length > 0 ? (
-                            <FlatList
-                                data={expenseBreakdown}
-                                renderItem={renderExpenseItem}
-                                keyExtractor={(item, idx) => item?.name ? item.name : idx.toString()}
-                                numColumns={2}
-                            />
-                        ) : (
-                            <Text className={`text-center ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>No expense breakdown data available</Text>
-                        )}
+                        <View className="flex-row items-center mb-4">
+                            <MaterialCommunityIcons name="hand-coin-outline" size={24} color={isDarkMode ? '#D1D5DB' : '#6B7280'} />
+                            <Text className={`text-lg font-semibold ml-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Lent Money</Text>
+                        </View>
+                        <Text className={`text-center ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Lent money analytics coming soon...</Text>
                     </View>
                 </ScrollView>
             )}

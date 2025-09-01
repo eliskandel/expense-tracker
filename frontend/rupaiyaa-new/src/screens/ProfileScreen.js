@@ -1,7 +1,7 @@
 // rupaiyaa-new/src/screens/ProfileScreen.js
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { useContext } from 'react';
-import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { useContext, useEffect, useState } from 'react';
+import { ActivityIndicator, Image, ScrollView, Switch, Text, TouchableOpacity, View } from 'react-native';
 import EditProfileModal from '../components/EditProfileModal';
 import Header from '../components/Header';
 import { AuthContext } from '../context/AuthContext';
