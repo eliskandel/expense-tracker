@@ -7,8 +7,7 @@ import { AuthContext } from './AuthContext'; // Import AuthContext
 export const ThemeContext = createContext();
 
 export const ThemeProvider = ({ children }) => {
-    // Correct: useContext at the top level
-    const { id: userId, isLoggedIn } = useContext(AuthContext);
+    // Do NOT use AuthContext at the top level here! It will be undefined during provider setup.
     const systemColorScheme = useColorScheme();
     const [isDarkMode, setIsDarkMode] = useState(systemColorScheme === 'dark');
 
@@ -60,12 +59,18 @@ export const ThemeProvider = ({ children }) => {
             await AsyncStorage.setItem('themePreference', newMode ? 'dark' : 'light');
             console.log('ThemeContext: Saved theme preference locally:', newMode ? 'dark' : 'light');
 
-            // Only attempt to update backend if user is logged in and userId is available
-            if (isLoggedIn && userId) {
-                await updateThemePreference(userId, newMode ? 'dark' : 'light'); // Pass userId
-                console.log('ThemeContext: Sent theme preference to backend.');
-            } else {
-                console.warn('ThemeContext: Not logged in or userId missing, skipping backend theme update.');
+            // Only get AuthContext here, after providers are mounted
+            try {
+                const { id: userId, isLoggedIn } = useContext(AuthContext);
+                if (isLoggedIn && userId) {
+                    await updateThemePreference(userId, newMode ? 'dark' : 'light');
+                    console.log('ThemeContext: Sent theme preference to backend.');
+                } else {
+                    console.warn('ThemeContext: Not logged in or userId missing, skipping backend theme update.');
+                }
+            } catch (err) {
+                // If context is not available, just skip backend update
+                console.warn('ThemeContext: AuthContext not available in toggleTheme.');
             }
         } catch (e) {
             console.error('ThemeContext: Failed to save theme preference locally or to backend:', e.response?.data || e.message);

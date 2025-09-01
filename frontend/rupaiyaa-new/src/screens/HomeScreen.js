@@ -1,6 +1,8 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useIsFocused, useNavigation } from '@react-navigation/native';
+import { fetchLendLogs, verifyLend } from '../api/lendApi';
+import AddLendModal from '../components/AddLendModal';
 // import { LinearGradient } from 'expo-linear-gradient';
 import { useContext, useEffect, useState } from 'react';
 import { ActivityIndicator, Dimensions, ScrollView, Text, TouchableOpacity, View } from 'react-native';
@@ -29,6 +31,22 @@ const HomeScreen = () => {
     const [budgets, setBudgets] = useState([]);
     const [budgetsLoading, setBudgetsLoading] = useState(true);
     const [deletingBudgetId, setDeletingBudgetId] = useState(null);
+    const [lendModalVisible, setLendModalVisible] = useState(false);
+    const [lendLogs, setLendLogs] = useState([]);
+    const [lendLoading, setLendLoading] = useState(false);
+    const [verifyingId, setVerifyingId] = useState(null);
+    // Fetch lend logs
+    const loadLendLogs = async () => {
+        setLendLoading(true);
+        try {
+            const data = await fetchLendLogs();
+            setLendLogs(data.results || data);
+        } catch (e) {
+            setLendLogs([]);
+        } finally {
+            setLendLoading(false);
+        }
+    };
 
     // Delete budget handler
     const handleDeleteBudget = async (budgetId) => {
@@ -143,6 +161,7 @@ const HomeScreen = () => {
         if (isFocused) {
             fetchDashboardData();
             fetchBudgets();
+            loadLendLogs();
         }
     }, [isFocused]);
 
@@ -330,14 +349,6 @@ const HomeScreen = () => {
                                 <Text className={`text-center ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>No expense breakdown data available</Text>
                             )}
                         </View>
-                        {/* Lent Money Slide (Placeholder) */}
-                        <View style={{ width: screenWidth - 48 }} className={`${isDarkMode ? 'bg-gray-900' : 'bg-white'} p-4 rounded-xl shadow-sm`}>
-                            <View className="flex-row items-center mb-4">
-                                <MaterialCommunityIcons name="hand-coin-outline" size={24} color={isDarkMode ? '#D1D5DB' : '#6B7280'} />
-                                <Text className={`text-lg font-semibold ml-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Lent Money</Text>
-                            </View>
-                            <Text className={`text-center ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Lent money analytics coming soon...</Text>
-                        </View>
                     </ScrollView>
 
                     {/* Set Budget Goal Button & Budget Cards Section (moved here) */}
@@ -360,13 +371,62 @@ const HomeScreen = () => {
                         </View>
                     </View>
 
-                    {/* Lent Money Section (moved here) */}
+                    {/* Lent Money Section (with Add Lend button) */}
                     <View className={`${isDarkMode ? 'bg-gray-900' : 'bg-white'} p-4 rounded-xl shadow-sm mb-6`}>
-                        <View className="flex-row items-center mb-4">
-                            <MaterialCommunityIcons name="hand-coin-outline" size={24} color={isDarkMode ? '#D1D5DB' : '#6B7280'} />
-                            <Text className={`text-lg font-semibold ml-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Lent Money</Text>
+                        <View className="flex-row items-center mb-4 justify-between">
+                            <View className="flex-row items-center">
+                                <MaterialCommunityIcons name="hand-coin-outline" size={24} color={isDarkMode ? '#D1D5DB' : '#6B7280'} />
+                                <Text className={`text-lg font-semibold ml-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Lent Money</Text>
+                            </View>
+                            <TouchableOpacity
+                                style={{ backgroundColor: colors.primary, borderRadius: 8, paddingVertical: 6, paddingHorizontal: 14 }}
+                                onPress={() => setLendModalVisible(true)}
+                            >
+                                <Text style={{ color: 'white', fontWeight: 'bold' }}>Add Lend</Text>
+                            </TouchableOpacity>
                         </View>
-                        <Text className={`text-center ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Lent money analytics coming soon...</Text>
+                        {lendLoading ? (
+                            <ActivityIndicator size="small" color={colors.primary} />
+                        ) : lendLogs.length === 0 ? (
+                            <Text className={`text-center ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>No lend logs yet.</Text>
+                        ) : (
+                            lendLogs.map((log) => (
+                                <View key={log.id} style={{ borderWidth: 1, borderColor: '#eee', borderRadius: 10, padding: 12, marginBottom: 10, backgroundColor: isDarkMode ? '#27272A' : '#F9FAFB' }}>
+                                    <Text style={{ fontWeight: 'bold', color: isDarkMode ? '#fff' : '#222' }}>{log.participant_name || log.participant || 'User'}</Text>
+                                    <Text style={{ color: '#7C3AED', fontWeight: 'bold' }}>Amount: {log.amount}</Text>
+                                    <Text>Type: {log.transaction_type === 'L' ? 'Lend' : 'Borrow'}</Text>
+                                    <Text>Status: {log.status ? 'Pending' : 'Lend'}</Text>
+                                    <Text>Due: {log.due_date}</Text>
+                                    <Text>Description: {log.description}</Text>
+                                    <TouchableOpacity
+                                        style={{ marginTop: 8, backgroundColor: '#7C3AED', borderRadius: 8, paddingVertical: 6, paddingHorizontal: 14, alignSelf: 'flex-end', opacity: verifyingId === log.id ? 0.5 : 1 }}
+                                        disabled={verifyingId === log.id || log.status}
+                                        onPress={async () => {
+                                            setVerifyingId(log.id);
+                                            try {
+                                                await verifyLend(log.id);
+                                                loadLendLogs();
+                                            } catch (e) {
+                                                alert('Failed to verify lend');
+                                            } finally {
+                                                setVerifyingId(null);
+                                            }
+                                        }}
+                                    >
+                                        <Text style={{ color: 'white', fontWeight: 'bold' }}>{log.status ? 'Pending' : verifyingId === log.id ? 'Verifying...' : 'Mark as Pending'}</Text>
+                                    </TouchableOpacity>
+                                </View>
+                            ))
+                        )}
+                        <AddLendModal
+                            visible={lendModalVisible}
+                            onClose={() => setLendModalVisible(false)}
+                            onSuccess={() => {
+                                setLendModalVisible(false);
+                                fetchDashboardData();
+                                loadLendLogs();
+                            }}
+                        />
                     </View>
                 </ScrollView>
             )}

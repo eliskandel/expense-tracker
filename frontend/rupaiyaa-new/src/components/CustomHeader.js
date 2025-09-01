@@ -22,7 +22,7 @@ const CustomHeader = ({
     const displayName = userName || 'User';
     const userInitial = displayName.charAt(0).toUpperCase();
 
-    const gradientColors = isDarkMode ? ['#4B0082', '#6A0DAD'] : ['#8A2BE2', '#4B0082'];
+    const gradientColors = isDarkMode ? ['#4B0082', '#6A0DAD'] : ['#8A2BE2', '#640fa1ff'];
     const headerContainerClass = isSmall ? 'pb-4' : 'pb-6';
 
     return (
@@ -78,10 +78,10 @@ const CustomHeader = ({
                     <View className="mt-4 px-6">
                         <Text className="text-white text-base opacity-80">Total Balance</Text>
                         <Text className="text-white text-4xl font-bold mt-1">{totalBalance}</Text>
-                        <View className="flex-row items-center mt-2">
+                        {/* <View className="flex-row items-center mt-2">
                             <MaterialCommunityIcons name="trending-up" size={18} color="white" />
                             <Text className="text-white ml-1 text-sm opacity-90">+12.5% from last month</Text>
-                        </View>
+                        </View> */}
                     </View>
                 )}
             </SafeAreaView>
