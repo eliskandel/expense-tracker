@@ -7,7 +7,7 @@ import { ActivityIndicator, Dimensions, FlatList, Platform, SafeAreaView, Scroll
 import { BarChart, PieChart } from 'react-native-chart-kit';
 import { AuthContext } from '../context/AuthContext';
 import { ThemeContext } from '../context/ThemeContext';
-
+const API_BASE_URL = 'http://10.40.20.94:8000';
 const screenWidth = Dimensions.get('window').width;
 const CustomHeader = ({ 
     title, 
@@ -22,7 +22,7 @@ const CustomHeader = ({
 
     const displayName = userName || 'User';
     const userInitial = displayName.charAt(0).toUpperCase();
-    const gradientColors = isDarkMode ? ['#4B0082', '#6A0DAD'] : ['#8A2BE2', '#6d0eb0ff'];
+    const gradientColors = isDarkMode ? ['#53048bff', '#6A0DAD'] : ['#8A2BE2', '#6d0eb0ff'];
     return (
         <LinearGradient
             colors={gradientColors}
@@ -85,7 +85,7 @@ const HomeScreen = () => {
         setError(null);
         try {
             const accessToken = await AsyncStorage.getItem('access_token');
-            const response = await fetch('http://127.0.0.1:8000/expense/report/', {
+            const response = await fetch('/expense/report/', {
                 headers: {
                     'Authorization': `Bearer ${accessToken}`,
                     'Content-Type': 'application/json',
@@ -145,7 +145,7 @@ const HomeScreen = () => {
         setBudgetsLoading(true);
         try {
             const accessToken = await AsyncStorage.getItem('access_token');
-            const response = await fetch('http://127.0.0.1:8000/budget/budgets/', {
+            const response = await fetch(`${API_BASE_URL}/budget/budgets/`, {
                 headers: {
                     'Authorization': `Bearer ${accessToken}`,
                     'Content-Type': 'application/json',
