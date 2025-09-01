@@ -1,43 +1,44 @@
 from django.db.models.signals import post_save
 from django.dispatch import receiver
+from django.db.models import Avg
 from decimal import Decimal
-from datetime import date
 
 from src.apps.expense.models import Expense
-from src.apps.budget.models import Budget
-from src.apps.common.tasks import send_user_mail  # Celery task
+from src.apps.common.tasks import send_user_mail
+from src.apps.notification.models import Notification  # optional
 
-THRESHOLD_WARNING = Decimal('0.8')  # 80%
+ANOMALY_FACTOR = Decimal('1.5')  # 1.5x average
 
 @receiver(post_save, sender=Expense)
-def check_budget_on_expense(sender, instance, **kwargs):
-    """
-    Check all budgets for the expense's category and month.
-    Notify the user if the threshold is exceeded.
-    """
+def expense_anomaly_alert(sender, instance, created, **kwargs):
+    if not created:
+        return  # Only check new expenses
+
     user = instance.paid_by
-    expense_category = instance.category
-    expense_month = instance.date.replace(day=1)  # normalize month
+    category = instance.category
+    expense_month = instance.date.replace(day=1)
 
-    # Get budgets for the user for this category and month
-    budgets = Budget.objects.filter(
-        user=user,
-        category=expense_category,
-        month=expense_month
-    )
+    # Calculate average of previous expenses for this user, category, month
+    previous_expenses = Expense.objects.filter(
+        paid_by=user,
+        category=category,
+        date__year=instance.date.year,
+        date__month=instance.date.month
+    ).exclude(id=instance.id)  # exclude current expense
 
-    for budget in budgets:
-        total_expense = budget.total_expense
-        allowed_expense = budget.allowed_expense
+    avg_expense = previous_expenses.aggregate(avg=Avg('amount'))['avg'] or Decimal('0')
 
-        if total_expense >= allowed_expense * THRESHOLD_WARNING:
-            # Send notification
-            # send_user_mail.delay(
-            #     subject=f"Budget Alert: {budget.category.name} - {budget.month.strftime('%B %Y')}",
-            #     recipients=[user.email],
-            #     message=(
-            #         f"Warning! You have spent {total_expense} out of "
-            #         f"{allowed_expense} allowed for category '{budget.category.name}' this month."
-            #     )
-            # )
-            pass
+    # Check if current expense is unusually large
+    if avg_expense > 0 and instance.amount >= ANOMALY_FACTOR * avg_expense:
+        subject = f"Unusual Expense Alert: {category.name}"
+        message = (
+            f"⚠️ You just added an expense of ${instance.amount}, "
+            f"which is more than 1.5× the average of your previous expenses (${avg_expense:.2f}) "
+            f"in this category for this month."
+        )
+        recipients = [user.email]
+
+        # Send email + create notification
+        send_user_mail.delay(subject, recipients, message)
+        # Optional: also save in DB
+        # Notification.objects.create(recipient=user, message=message)

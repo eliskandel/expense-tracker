@@ -54,7 +54,8 @@ INSTALLED_APPS = [
     "src.apps.expense",
     "src.apps.budget",
     "src.apps.lend",
-  
+    "src.apps.notification"
+
 ]
 
 MIDDLEWARE = [
@@ -87,6 +88,7 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = "src.wsgi.application"
+
 
 
 # Database
@@ -201,8 +203,20 @@ REST_FRAMEWORK = {
     # ],
     "DEFAULT_FILTER_BACKENDS": ("django_filters.rest_framework.DjangoFilterBackend",),
     "EXCEPTION_HANDLER": "drf_standardized_errors.handler.exception_handler",
+    # 'DEFAULT_THROTTLE_CLASSES': [
+    #     'rest_framework.throttling.AnonRateThrottle',
+    #     'rest_framework.throttling.UserRateThrottle'
+    # ],
+    # 'DEFAULT_THROTTLE_RATES': {
+    #     'anon': '100/day',
+    #     'user': '1000/day'
+    # }
 }
-
+# CACHES = {
+#     'default': {
+#         'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+#     }
+# }
 DRF_STANDARDIZED_ERRORS = {"ENABLE_IN_DEBUG_FOR_UNHANDLED_EXCEPTIONS": True}
 
 

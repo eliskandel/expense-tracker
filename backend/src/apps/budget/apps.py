@@ -1,6 +1,8 @@
 from django.apps import AppConfig
 
-
 class BudgetConfig(AppConfig):
-    default_auto_field = "django.db.models.BigAutoField"
-    name = "src.apps.budget"
+    default_auto_field = 'django.db.models.BigAutoField'
+    name = 'src.apps.budget'
+
+    def ready(self):
+        import src.apps.budget.signals  # noqa

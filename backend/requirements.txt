@@ -3,11 +3,13 @@ asgiref==3.9.1
 attrs==25.3.0
 billiard==4.2.1
 celery==5.5.3
+channels==4.3.1
+channels_redis==4.3.0
 click==8.2.1
 click-didyoumean==0.3.1
 click-plugins==1.1.1.2
 click-repl==0.3.0
-cron_descriptor==1.4.5
+cron-descriptor==1.4.5
 Django==5.2.5
 django-celery-beat==2.8.1
 django-cors-headers==4.7.0
@@ -21,6 +23,7 @@ inflection==0.5.1
 jsonschema==4.25.1
 jsonschema-specifications==2025.4.1
 kombu==5.5.4
+msgpack==1.1.1
 packaging==25.0
 pillow==11.3.0
 prompt_toolkit==3.0.51
@@ -29,6 +32,7 @@ python-crontab==3.3.0
 python-dateutil==2.9.0.post0
 python-decouple==3.8
 PyYAML==6.0.2
+redis==5.2.1
 referencing==0.36.2
 rpds-py==0.27.0
 six==1.17.0

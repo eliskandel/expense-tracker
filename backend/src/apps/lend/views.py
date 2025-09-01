@@ -18,17 +18,12 @@ class TransactionListCreateView(generics.ListCreateAPIView):
     filterset_class = TransactionFilter
 
     def get_queryset(self):
-        """
-        Filter transactions to only show those where the user is either the initiator or the participant.
-        """
+
         user = self.request.user
         return Transaction.objects.filter(initiator=user) | Transaction.objects.filter(participant=user)
 
     def perform_create(self, serializer):
-        """
-        Set the initiator of the transaction to the authenticated user.
-        """
-        serializer.save(initiator=self.request.user)
+        serializer.save()
 
 
 class TransactionRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
@@ -48,9 +43,7 @@ class TransactionRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView
 
 
 class TransactionVerificationDetailView(generics.RetrieveUpdateAPIView):
-    """
-    API view to retrieve and update the verification status of a transaction.
-    """
+
     queryset = TransactionVerification.objects.all()
     serializer_class = TransactionVerificationSerializer
     permission_classes = [IsAuthenticated, IsInitiatorOrParticipant]

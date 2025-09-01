@@ -19,7 +19,7 @@ class TransactionVerificationSerializer(serializers.ModelSerializer):
 
 class TransactionSerializer(serializers.ModelSerializer):
     initiator = UserSerializer(read_only=True)
-    participant = UserSerializer()
+    # participant = UserSerializer()
     interest_amount = serializers.SerializerMethodField()
     is_verified = serializers.SerializerMethodField()
     verification = TransactionVerificationSerializer(read_only=True)
@@ -65,15 +65,15 @@ class TransactionSerializer(serializers.ModelSerializer):
         with transaction.atomic():
             initiator_user = self.context['request'].user
             participant_user = validated_data.pop('participant')
-            
+        
             # Create the transaction for the initiator
             original_transaction = Transaction.objects.create(
                 initiator=initiator_user,
-                participant=participant_user,
+                participant=participant_user,   
                 **validated_data
             )
-            
-            # Determine the reciprocal type
+        
+        # Determine the reciprocal type
             reciprocal_type = Transaction.BORROW if original_transaction.transaction_type == Transaction.LEND else Transaction.LEND
             
             # Create the reciprocal transaction for the participant
@@ -88,13 +88,13 @@ class TransactionSerializer(serializers.ModelSerializer):
                 description=original_transaction.description
             )
             
-            # Create the initial verification object
+            # Create the initial verification object and set the initiator's flag to True
             TransactionVerification.objects.create(
-                transaction=original_transaction
+                transaction=original_transaction,
+                verified_by_initiator=True  # <-- Corrected logic here
             )
-            
-            return original_transaction
-
+        
+        return original_transaction
     def update(self, instance, validated_data):
         """
         Handles updates to the transaction status. If the status is 'PAID',

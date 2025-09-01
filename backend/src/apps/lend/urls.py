@@ -7,17 +7,17 @@ from .views import (
 
 urlpatterns = [
     path(
-        'transactions/',
+        '',
         TransactionListCreateView.as_view(),
         name='transaction-list'
     ),
     path(
-        'transactions/<int:pk>/',
+        '<int:pk>/',
         TransactionRetrieveUpdateDestroyView.as_view(),
         name='transaction-detail'
     ),
     path(
-        'transactions/<int:pk>/verification/',
+        '<int:pk>/verification/',
         TransactionVerificationDetailView.as_view(),
         name='transaction-verification'
     ),

@@ -32,7 +32,7 @@ class Expense(models.Model):
     amount = models.DecimalField(max_digits=10, decimal_places=2)
     description = models.CharField(max_length=255)
     created_by=models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='expenses_created')
-    date = models.DateField(auto_now_add=True)
+    date = models.DateField()
     updated = models.DateField(auto_now=True)
     category = models.ForeignKey(Category, on_delete=models.CASCADE)
 
