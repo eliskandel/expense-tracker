@@ -36,15 +36,23 @@ const CustomHeader = ({
                         <Text className="text-white text-lg font-medium opacity-80">{title}</Text>
                         {subtitle && <Text className="text-white text-2xl font-bold mt-1">{subtitle}</Text>}
                     </View>
-                    
-                    {showProfileIcon && (
+                    <View className="flex-row items-center">
+                        {/* Notification Icon */}
                         <TouchableOpacity
-                            onPress={() => navigation.navigate('Profile')}
-                            className="w-10 h-10 rounded-full bg-white bg-opacity-30 justify-center items-center"
+                            onPress={() => navigation.navigate('Notifications')}
+                            className="w-10 h-10 rounded-full bg-white bg-opacity-30 justify-center items-center mr-2"
                         >
-                            <Text className="text-white font-bold text-lg">{userInitial}</Text>
+                            <MaterialCommunityIcons name="bell-outline" size={24} color="white" />
                         </TouchableOpacity>
-                    )}
+                        {showProfileIcon && (
+                            <TouchableOpacity
+                                onPress={() => navigation.navigate('Profile')}
+                                className="w-10 h-10 rounded-full bg-white bg-opacity-30 justify-center items-center"
+                            >
+                                <Text className="text-white font-bold text-lg">{userInitial}</Text>
+                            </TouchableOpacity>
+                        )}
+                    </View>
                 </View>
 
                 {showTotalBalance && (
@@ -52,8 +60,8 @@ const CustomHeader = ({
                         <Text className="text-white text-base opacity-80">Total Balance</Text>
                         <Text className="text-white text-4xl font-bold mt-1">{totalBalance}</Text>
                         <View className="flex-row items-center mt-2">
-                            <MaterialCommunityIcons name="trending-up" size={18} color="white" />
-                            <Text className="text-white ml-1 text-sm opacity-90">+12.5% from last month</Text>
+                            {/* <MaterialCommunityIcons name="trending-up" size={18} color="white" /> */}
+                            {/* <Text className="text-white ml-1 text-sm opacity-90">+12.5% from last month</Text> */}
                         </View>
                     </View>
                 )}
@@ -85,7 +93,7 @@ const HomeScreen = () => {
         setError(null);
         try {
             const accessToken = await AsyncStorage.getItem('access_token');
-            const response = await fetch('/expense/report/', {
+            const response = await fetch(`${API_BASE_URL}/expense/report/`, {
                 headers: {
                     'Authorization': `Bearer ${accessToken}`,
                     'Content-Type': 'application/json',
@@ -248,9 +256,10 @@ const HomeScreen = () => {
                 </View>
             ) : (
                 <ScrollView 
-                    className="flex-1 px-6"
+                    className="flex-1"
                     contentContainerStyle={{
-                        paddingTop: 16 // Ensures content doesn't overlap the header
+                        paddingTop: 16,
+                        paddingHorizontal: 24 // Ensures content doesn't overlap the header and matches chart width
                     }}
                 >
                     {/* Income/Expenses Section */}
@@ -282,30 +291,30 @@ const HomeScreen = () => {
                             <Text className={`text-lg font-semibold ml-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Daily Spending</Text>
                         </View>
                         {Array.isArray(dailySpendingData.labels) && Array.isArray(dailySpendingData.datasets) && dailySpendingData.labels.length > 0 && dailySpendingData.datasets[0].data.length > 0 ? (
-                            <BarChart
-                                data={dailySpendingData}
-                                width={screenWidth - 48}
-                                height={220}
-                                yAxisLabel="रू"
-                                fromZero={true}
-                                showValuesOnTopOfBars={true}
-                                chartConfig={{
-                                    backgroundColor: isDarkMode ? '#1F2937' : '#ffffff',
-                                    backgroundGradientFrom: isDarkMode ? '#1F2937' : '#ffffff',
-                                    backgroundGradientTo: isDarkMode ? '#1F2937' : '#ffffff',
-                                    decimalPlaces: 0,
-                                    color: (opacity = 1) => `rgba(138, 43, 226, ${opacity})`,
-                                    labelColor: (opacity = 1) => `rgba(107, 114, 128, ${opacity})`,
-                                    propsForBackgroundLines: {
-                                        strokeDasharray: '',
-                                        stroke: isDarkMode ? '#4B5563' : '#E5E7EB',
-                                    },
-                                    barPercentage: 0.7,
-                                }}
-                                style={{
-                                    borderRadius: 16
-                                }}
-                            />
+                            <View style={{ overflow: 'hidden', borderRadius: 16 }}>
+                                <BarChart
+                                    data={dailySpendingData}
+                                    width={screenWidth - 48}
+                                    height={220}
+                                    yAxisLabel="रू"
+                                    fromZero={true}
+                                    showValuesOnTopOfBars={true}
+                                    chartConfig={{
+                                        backgroundColor: isDarkMode ? '#1F2937' : '#ffffff',
+                                        backgroundGradientFrom: isDarkMode ? '#1F2937' : '#ffffff',
+                                        backgroundGradientTo: isDarkMode ? '#1F2937' : '#ffffff',
+                                        decimalPlaces: 0,
+                                        color: (opacity = 1) => `rgba(138, 43, 226, ${opacity})`,
+                                        labelColor: (opacity = 1) => `rgba(107, 114, 128, ${opacity})`,
+                                        propsForBackgroundLines: {
+                                            strokeDasharray: '',
+                                            stroke: isDarkMode ? '#4B5563' : '#E5E7EB',
+                                        },
+                                        barPercentage: 0.7,
+                                    }}
+                                    style={{ borderRadius: 0 }}
+                                />
+                            </View>
                         ) : (
                             <Text className={`text-center ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>No daily spending data available</Text>
                         )}
@@ -344,7 +353,7 @@ const HomeScreen = () => {
                     {/* Set Budget Goal Button & Budget Cards Section (moved here) */}
                     <View className="mb-4">
                         <TouchableOpacity
-                            style={{ backgroundColor: colors.accent }}
+                            style={{ backgroundColor: colors.primary }}
                             className="w-full py-3 rounded-xl items-center mb-4"
                             onPress={() => navigation.navigate('SetBudgetGoal')}
                         >

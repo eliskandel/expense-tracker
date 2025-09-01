@@ -52,6 +52,13 @@ const CustomHeader = ({
                                 <MaterialCommunityIcons name="filter-variant" size={24} color="white" />
                             </TouchableOpacity>
                         )}
+                        {/* Notification Icon */}
+                        <TouchableOpacity
+                            onPress={() => navigation.navigate('Notifications')}
+                            className="w-10 h-10 rounded-full bg-white bg-opacity-30 justify-center items-center mr-2"
+                        >
+                            <MaterialCommunityIcons name="bell-outline" size={24} color="white" />
+                        </TouchableOpacity>
                         {showProfileIcon && (
                             <TouchableOpacity
                                 onPress={() => navigation.navigate('Profile')}
