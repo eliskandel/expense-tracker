@@ -1,13 +1,14 @@
-import React, { createContext, useState, useEffect, useContext } from 'react';
-import { useColorScheme, Appearance } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { createContext, useContext, useEffect, useState } from 'react';
+import { useColorScheme } from 'react-native';
 import { updateThemePreference } from '../api/apiService';
 import { AuthContext } from './AuthContext'; // Import AuthContext
 
 export const ThemeContext = createContext();
 
 export const ThemeProvider = ({ children }) => {
-    // Removed direct destructuring of userId and isLoggedIn here to avoid early access
+    // Correct: useContext at the top level
+    const { id: userId, isLoggedIn } = useContext(AuthContext);
     const systemColorScheme = useColorScheme();
     const [isDarkMode, setIsDarkMode] = useState(systemColorScheme === 'dark');
 
@@ -58,10 +59,6 @@ export const ThemeProvider = ({ children }) => {
         try {
             await AsyncStorage.setItem('themePreference', newMode ? 'dark' : 'light');
             console.log('ThemeContext: Saved theme preference locally:', newMode ? 'dark' : 'light');
-
-            // MOVED: Get userId and isLoggedIn from AuthContext *inside* toggleTheme
-            // This ensures AuthContext is fully initialized when toggleTheme is called
-            const { id: userId, isLoggedIn } = useContext(AuthContext);
 
             // Only attempt to update backend if user is logged in and userId is available
             if (isLoggedIn && userId) {
