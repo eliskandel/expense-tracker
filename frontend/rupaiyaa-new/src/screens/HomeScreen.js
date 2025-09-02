@@ -7,6 +7,7 @@ import AddLendModal from '../components/AddLendModal';
 import { useContext, useEffect, useState } from 'react';
 import { ActivityIndicator, Dimensions, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { BarChart, PieChart } from 'react-native-chart-kit';
+import ChatbotModal from '../components/ChatbotModal';
 import CustomHeader from '../components/CustomHeader';
 import { AuthContext } from '../context/AuthContext';
 import { ThemeContext } from '../context/ThemeContext';
@@ -35,7 +36,55 @@ const HomeScreen = () => {
     const [lendLogs, setLendLogs] = useState([]);
     const [lendLoading, setLendLoading] = useState(false);
     const [verifyingId, setVerifyingId] = useState(null);
+    // Chatbot modal state
+    const [chatbotVisible, setChatbotVisible] = useState(false);
+    const [chatbotLoading, setChatbotLoading] = useState(false);
+    const [chatbotResponse, setChatbotResponse] = useState(null);
+    const [chatbotContext, setChatbotContext] = useState(null);
+    const [chatHistory, setChatHistory] = useState([]);
+    // Fetch chat history
+    const fetchChatHistory = async () => {
+        try {
+            const accessToken = await AsyncStorage.getItem('access_token');
+            const response = await fetch(`${API_BASE_URL}/chatbot/history/`, {
+                headers: {
+                    'Authorization': `Bearer ${accessToken}`,
+                    'Content-Type': 'application/json',
+                },
+            });
+            const data = await response.json();
+            setChatHistory(Array.isArray(data) ? data : (data.results || []));
+        } catch (e) {
+            setChatHistory([]);
+        }
+    };
+
     // Fetch lend logs and filter for current user (initiator/participant)
+    // Send message to chatbot API
+    const sendChatbotMessage = async (message) => {
+        setChatbotLoading(true);
+        setChatbotResponse(null);
+        setChatbotContext(null);
+        try {
+            const accessToken = await AsyncStorage.getItem('access_token');
+            const response = await fetch(`${API_BASE_URL}/chatbot/chat/`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${accessToken}`,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ message }),
+            });
+            const data = await response.json();
+            setChatbotResponse(data?.ai_response || data?.response || 'No response');
+            setChatbotContext(data?.context_used || null);
+        } catch (e) {
+            setChatbotResponse('Failed to get response');
+            setChatbotContext(null);
+        } finally {
+            setChatbotLoading(false);
+        }
+    };
     const loadLendLogs = async () => {
         setLendLoading(true);
         try {
@@ -238,14 +287,61 @@ const HomeScreen = () => {
     };
 
     const navigation = useNavigation();
+    // Open chatbot modal and load welcome message on click or hover (bottom right)
+    const [chatbotIconHover, setChatbotIconHover] = useState(false);
+    const handleChatbotIconOpen = () => {
+        if (!chatbotVisible) {
+            setChatbotVisible(true);
+            fetchChatHistory();
+            sendChatbotMessage('');
+        }
+    };
+
     return (
-        <View className={`flex-1 ${isDarkMode ? 'bg-gray-800' : 'bg-gray-100'}`}>
+        <View className={`flex-1 ${isDarkMode ? 'bg-gray-800' : 'bg-gray-100'}`}> 
             <CustomHeader
                 title="Good Morning!"
                 subtitle={`Welcome back, ${userName || 'User'}`}
                 showProfileIcon={true}
                 showTotalBalance={true}
                 totalBalance={`रू${totalBalance}`}
+            />
+
+            {/* Chatbot Modal */}
+            {/* Chatbot floating icon bottom right */}
+            <View
+                style={{ position: 'absolute', bottom: 32, right: 24, zIndex: 100 }}
+                pointerEvents="box-none"
+            >
+                <TouchableOpacity
+                    onPress={handleChatbotIconOpen}
+                    onMouseEnter={() => { setChatbotIconHover(true); handleChatbotIconOpen(); }}
+                    onMouseLeave={() => setChatbotIconHover(false)}
+                    style={{ backgroundColor: '#7C3AED', borderRadius: 32, width: 56, height: 56, justifyContent: 'center', alignItems: 'center', shadowColor: '#000', shadowOpacity: 0.2, shadowRadius: 8, elevation: 8 }}
+                    accessibilityLabel="Open Chatbot"
+                >
+                    <MaterialCommunityIcons name="robot" size={32} color={'#fff'} />
+                </TouchableOpacity>
+                {chatbotIconHover && (
+                    <View style={{ position: 'absolute', bottom: 64, right: 0, backgroundColor: '#27272A', padding: 8, borderRadius: 8, zIndex: 101 }}>
+                        <Text style={{ color: '#fff', fontSize: 13 }}>Say hi to AI</Text>
+                    </View>
+                )}
+            </View>
+            <ChatbotModal
+                visible={chatbotVisible}
+                onClose={() => {
+                    setChatbotVisible(false);
+                    setChatbotResponse(null);
+                    setChatbotContext(null);
+                    setChatHistory([]);
+                }}
+                onSend={sendChatbotMessage}
+                isDarkMode={isDarkMode}
+                loading={chatbotLoading}
+                response={chatbotResponse}
+                context={chatbotContext}
+                history={chatHistory}
             />
 
             {isLoading ? (

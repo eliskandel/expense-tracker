@@ -15,7 +15,8 @@ const CustomHeader = ({
     isSmall = false,
     showTotalBalance = false,
     totalBalance = 'रू0',
-    onFilterPress
+    onFilterPress,
+    onChatbotPress
 }) => {
     const navigation = useNavigation();
     const { isDarkMode } = useContext(ThemeContext);
@@ -78,6 +79,7 @@ const CustomHeader = ({
     const gradientColors = isDarkMode ? ['#4B0082', '#6A0DAD'] : ['#8A2BE2', '#640fa1ff'];
     const headerContainerClass = isSmall ? 'pb-4' : 'pb-6';
 
+    const [chatbotHover, setChatbotHover] = useState(false);
     return (
         <LinearGradient
             colors={gradientColors}
@@ -98,8 +100,7 @@ const CustomHeader = ({
                             {subtitle && <Text className="text-white text-2xl font-bold mt-1">{subtitle}</Text>}
                         </View>
                     </View>
-                    
-                    <View className="flex-row items-center">
+                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                         {onFilterPress && (
                             <TouchableOpacity onPress={onFilterPress} className="w-10 h-10 rounded-full bg-white bg-opacity-30 justify-center items-center mr-2">
                                 <MaterialCommunityIcons name="filter-variant" size={24} color="white" />
@@ -129,6 +130,7 @@ const CustomHeader = ({
                                 )}
                             </TouchableOpacity>
                         )}
+                        {/* Chatbot icon removed from header */}
                     </View>
                 </View>
 
