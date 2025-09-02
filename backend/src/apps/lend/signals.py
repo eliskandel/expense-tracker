@@ -6,11 +6,9 @@ from src.apps.notification.models import Notification
 
 @receiver(post_save, sender=Transaction)
 def notify_transaction_participant(sender, instance, created, **kwargs):
-    """
-    Send notification/email to the participant whenever a new transaction is created.
-    """
+
     if not created:
-        return  # Only trigger on new transactions
+        return 
 
     # Only notify if transaction type is LEND
     if instance.transaction_type == Transaction.LEND:
@@ -27,5 +25,3 @@ def notify_transaction_participant(sender, instance, created, **kwargs):
         # 1️⃣ Send email + notification using Celery task
         send_user_mail.delay(subject, [recipient.email], message)
 
-        # 2️⃣ Optional: save notification in DB if you want immediate frontend fetch
-        # Notification.objects.create(recipient=recipient, message=message)

@@ -11,6 +11,7 @@ from .views import (
     ExpenseShareDetail,
     SettlementCreate
 )
+# from .view1 import ExpenseExportView
 
 urlpatterns = [
     # Expense and Category URLs
@@ -29,5 +30,7 @@ urlpatterns = [
 
     # Reporting URLs
     path('report/', FinancialSummaryView.as_view(), name='financial-summary'),
-    path('reports/transactions/', RecentTransactionsView.as_view(), name='recent-transactions')
+    path('reports/transactions/', RecentTransactionsView.as_view(), name='recent-transactions'),
+
+    # path('export/', ExpenseExportView.as_view(), name='expense-export'),  # Try this path
 ]

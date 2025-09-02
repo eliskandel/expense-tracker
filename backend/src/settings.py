@@ -101,37 +101,16 @@ WSGI_APPLICATION = "src.wsgi.application"
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 from src.utility.db_config import DBConfigHandler
 
-db_config = DBConfigHandler().get_db_config_for_current_env()
-USE_SQLITE = config("USE_SQLITE", default=True, cast=bool)
-if USE_SQLITE:
-    DATABASES = {
-        "default": {
-            "ENGINE": "django.db.backends.sqlite3",
-            "NAME": BASE_DIR / "db.sqlite3",
-            "OPTIONS": {
-                "timeout": 20,
-            },
-        },
-        **db_config,
+DATABASES = {
+    "default": {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": os.getenv("DATABASE_NAME", "mydb"),
+        "USER": os.getenv("DATABASE_USER", "myuser"),
+        "PASSWORD": os.getenv("DATABASE_PASSWORD", "mypassword"),
+        "HOST": os.getenv("DATABASE_HOST", "db"),  # must match docker-compose service name
+        "PORT": 5432,
     }
-else:
-    POSTGRES_DB = config("POSTGRES_DB", default="")
-    POSTGRES_USER = config("POSTGRES_USER", default="")
-    POSTGRES_PASSWORD = config("POSTGRES_PASSWORD", default="")
-    POSTGRES_HOST = config("POSTGRES_HOST", default="")
-    POSTGRES_PORT = config("POSTGRES_PORT", default="")
-
-    DATABASES = {
-        "default": {
-            "ENGINE": "django.db.backends.postgresql_psycopg2",
-            "NAME": POSTGRES_DB,
-            "USER": POSTGRES_USER,
-            "PASSWORD": POSTGRES_PASSWORD,
-            "HOST": POSTGRES_HOST,
-            "PORT": POSTGRES_PORT,
-        },
-        **db_config,
-    }
+}
 
 
 # Password validation
@@ -221,20 +200,14 @@ REST_FRAMEWORK = {
 # }
 DRF_STANDARDIZED_ERRORS = {"ENABLE_IN_DEBUG_FOR_UNHANDLED_EXCEPTIONS": True}
 
-
-# The `SPECTACULAR_SETTINGS` dictionary is used to configure the settings for the
-# Django Spectacular
-# package, which is used for generating OpenAPI schemas for Django REST Framework APIs.
+# 1: Simple settings without hooks
 SPECTACULAR_SETTINGS = {
-    "TITLE": "Expense Tracker Backend",
-    "DESCRIPTION": "API for Expense Tracker Backend service",
-    "VERSION": "1.0.0",
-    "SCHEMA_PATH_PREFIX": r"/api/v[0-9]",
+    'TITLE': 'Expense Tracker Backend',
+    'DESCRIPTION': 'API for Expense Tracker Backend service',
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
+    'COMPONENT_SPLIT_REQUEST': True,
 }
-
-
-# The `CORS_ALLOW_HEADERS` setting in Django allows you to specify
-#  the headers that are allowed in cross origin requests
 
 CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True
@@ -303,7 +276,7 @@ SIMPLE_JWT = {
 }
 
 # settings.py
-CELERY_BROKER_URL = 'redis://localhost:6379/0'
+CELERY_BROKER_URL = 'redis://redis:6379/0'
 CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
 
 

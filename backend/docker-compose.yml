@@ -1,62 +1,45 @@
 version: '3.8'
 
 services:
-  # The Django web server service
   web:
-    # Use the local Dockerfile to build the image
     build: .
-    # Map port 8000 on the host to port 8000 in the container
+    command: python manage.py runserver 0.0.0.0:8000
+    volumes:
+      - .:/usr/src/app
     ports:
       - "8000:8000"
-    # Mount the local directory to the container, so code changes are reflected instantly
-    volumes:
-      - .:/usr/src/app
-    # Set the command to run the Django development server
-    command: python manage.py runserver 0.0.0.0:8000
-    # The web service depends on the redis service being ready
+    env_file:
+      - .env
     depends_on:
+      - db
       - redis
-    # Inject environment variables for the Celery broker URL
-    environment:
-      - CELERY_BROKER_URL=redis://redis:6379/0
 
-  # The Redis service, which will act as the message broker for Celery
-  redis:
-    image: "redis:latest"
-    # Expose the default Redis port
+  db:
+    image: postgres:14
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
     ports:
-      - "6379:6379"
+      - "5432:5432"
 
-  # The Celery worker service to process background tasks
+  redis:
+    image: redis:6-alpine
+    restart: always
+
   celery_worker:
-    # Build from the same Dockerfile as the web service
     build: .
-    # Mount the local directory for code synchronization
-    volumes:
-      - .:/usr/src/app
-    # Define the command to start the Celery worker
     command: celery -A src worker --loglevel=info
-    # The worker depends on the web and redis services
-    depends_on:
-      - web
-      - redis
-    # Inject environment variables for the Celery broker URL
-    environment:
-      - CELERY_BROKER_URL=redis://redis:6379/0
-
-  # The Celery Beat service to handle periodic, scheduled tasks
-  celery_beat:
-    # Build from the same Dockerfile
-    build: .
-    # Mount the local directory for code synchronization
     volumes:
       - .:/usr/src/app
-    # Define the command to start the Celery beat scheduler
-    command: celery -A src beat --loglevel=info
-    # The beat scheduler depends on the web and redis services
+    env_file:
+      - .env
     depends_on:
-      - web
+      - db
       - redis
-    # Inject environment variables for the Celery broker URL
-    environment:
-      - CELERY_BROKER_URL=redis://redis:6379/0
+
+volumes:
+  postgres_data:
