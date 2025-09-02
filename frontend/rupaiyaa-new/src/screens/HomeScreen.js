@@ -1,11 +1,12 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useIsFocused, useNavigation } from '@react-navigation/native';
+import { fetchEvents } from '../api/eventApi';
 import { fetchLendLogs } from '../api/lendApi';
 import AddLendModal from '../components/AddLendModal';
 // import { LinearGradient } from 'expo-linear-gradient';
 import { useContext, useEffect, useState } from 'react';
-import { ActivityIndicator, Dimensions, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Dimensions, Modal, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { BarChart, PieChart } from 'react-native-chart-kit';
 import ChatbotModal from '../components/ChatbotModal';
 import CustomHeader from '../components/CustomHeader';
@@ -36,7 +37,28 @@ const HomeScreen = () => {
     const [lendLogs, setLendLogs] = useState([]);
     const [lendLoading, setLendLoading] = useState(false);
     const [verifyingId, setVerifyingId] = useState(null);
+    const [showAllLends, setShowAllLends] = useState(false);
+    // Events state
+    const [events, setEvents] = useState([]);
+    const [eventsLoading, setEventsLoading] = useState(true);
+    const [showAllEvents, setShowAllEvents] = useState(false);
     // Warning message state
+    // Fetch events
+    const loadEvents = async () => {
+        setEventsLoading(true);
+        try {
+            const data = await fetchEvents();
+            setEvents(data.results || data);
+        } catch (e) {
+            setEvents([]);
+        } finally {
+            setEventsLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        loadEvents();
+    }, []);
     const [warningMessage, setWarningMessage] = useState('');
     // Chatbot modal state
     const [chatbotVisible, setChatbotVisible] = useState(false);
@@ -496,6 +518,67 @@ const HomeScreen = () => {
                         </View>
                     </View>
 
+                    {/* Add Event Button (below Set Budget section) */}
+                    <TouchableOpacity
+                        onPress={() => navigation.navigate('EventScreen')}
+                        style={{ marginBottom: 24, alignSelf: 'center', backgroundColor: '#7C3AED', borderRadius: 24, paddingVertical: 12, paddingHorizontal: 32 }}
+                    >
+                        <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 16 }}>Add an Event</Text>
+                    </TouchableOpacity>
+                    {/* Events Section */}
+                    <View style={{ marginBottom: 24 }}>
+                        <Text style={{ fontSize: 20, fontWeight: 'bold', color: colors.primary, marginBottom: 8 }}>Events</Text>
+                        {eventsLoading ? (
+                            <ActivityIndicator size="small" color={colors.primary} />
+                        ) : events.length === 0 ? (
+                            <Text style={{ color: isDarkMode ? '#aaa' : '#888', textAlign: 'center' }}>No events found.</Text>
+                        ) : (
+                            <>
+                                {(events.slice(0, 2)).map(ev => (
+                                    <TouchableOpacity
+                                        key={ev.id || ev.name}
+                                        onPress={() => navigation.navigate('EventExpenseScreen', { eventId: ev.id, eventName: ev.name })}
+                                        style={{ backgroundColor: isDarkMode ? '#23272e' : '#fff', borderRadius: 10, padding: 12, marginBottom: 10, borderWidth: 1, borderColor: '#eee' }}
+                                    >
+                                        <Text style={{ fontWeight: 'bold', color: colors.primary, fontSize: 16 }}>{ev.name}</Text>
+                                        <Text style={{ color: isDarkMode ? '#fff' : '#222', marginBottom: 2 }}>{ev.description}</Text>
+                                        <Text style={{ color: '#666' }}>Date: {ev.date}</Text>
+                                        <Text style={{ color: '#666' }}>Location: {ev.location}</Text>
+                                    </TouchableOpacity>
+                                ))}
+                                {events.length > 2 && (
+                                    <TouchableOpacity onPress={() => setShowAllEvents(true)} style={{ alignSelf: 'center', marginTop: 4, backgroundColor: '#E5E7EB', borderRadius: 8, paddingVertical: 6, paddingHorizontal: 18 }}>
+                                        <Text style={{ color: colors.primary, fontWeight: 'bold' }}>See More</Text>
+                                    </TouchableOpacity>
+                                )}
+                                <Modal visible={showAllEvents} animationType="slide" onRequestClose={() => setShowAllEvents(false)}>
+                                    <View style={{ flex: 1, backgroundColor: isDarkMode ? '#23272e' : '#fff', padding: 20 }}>
+                                        <Text style={{ fontSize: 22, fontWeight: 'bold', color: colors.primary, marginBottom: 16 }}>All Events</Text>
+                                        <ScrollView>
+                                            {events.map(ev => (
+                                                <TouchableOpacity
+                                                    key={ev.id || ev.name}
+                                                    onPress={() => {
+                                                        setShowAllEvents(false);
+                                                        navigation.navigate('EventExpenseScreen', { eventId: ev.id, eventName: ev.name });
+                                                    }}
+                                                    style={{ backgroundColor: isDarkMode ? '#23272e' : '#fff', borderRadius: 10, padding: 12, marginBottom: 10, borderWidth: 1, borderColor: '#eee' }}
+                                                >
+                                                    <Text style={{ fontWeight: 'bold', color: colors.primary, fontSize: 16 }}>{ev.name}</Text>
+                                                    <Text style={{ color: isDarkMode ? '#fff' : '#222', marginBottom: 2 }}>{ev.description}</Text>
+                                                    <Text style={{ color: '#666' }}>Date: {ev.date}</Text>
+                                                    <Text style={{ color: '#666' }}>Location: {ev.location}</Text>
+                                                </TouchableOpacity>
+                                            ))}
+                                        </ScrollView>
+                                        <TouchableOpacity onPress={() => setShowAllEvents(false)} style={{ alignSelf: 'center', marginTop: 12, backgroundColor: colors.primary, borderRadius: 8, paddingVertical: 10, paddingHorizontal: 32 }}>
+                                            <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 16 }}>Close</Text>
+                                        </TouchableOpacity>
+                                    </View>
+                                </Modal>
+                            </>
+                        )}
+                    </View>
                     {/* Lent Money Section (with Add Lend button) */}
                     <View className={`${isDarkMode ? 'bg-gray-900' : 'bg-white'} p-4 rounded-xl shadow-sm mb-6`}>
                         <View className="flex-row items-center mb-4 justify-between">
@@ -515,12 +598,34 @@ const HomeScreen = () => {
                         ) : lendLogs.length === 0 ? (
                             <Text className={`text-center ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>No lend logs yet.</Text>
                         ) : (
-                            lendLogs.map((log) => {
+                            <>
+                                {lendLogs.slice(0, 2).map((log) => {
                                 // Show initiator_username and participant_username if available
                                 const initiatorUsername = log.initiator_username || (log.initiator && (log.initiator.username || log.initiator.email || log.initiator.name)) || 'Unknown';
                                 const participantUsername = log.participant_username || (log.participant && (log.participant.username || log.participant.email || log.participant.name)) || 'Unknown';
                                 return (
-                                    <View key={log.id} style={{ borderWidth: 1, borderColor: '#eee', borderRadius: 10, padding: 12, marginBottom: 10, backgroundColor: isDarkMode ? '#27272A' : '#F9FAFB' }}>
+                                    <View key={log.id} style={{ borderWidth: 1, borderColor: '#eee', borderRadius: 10, padding: 12, marginBottom: 10, backgroundColor: isDarkMode ? '#27272A' : '#F9FAFB', position: 'relative' }}>
+                                        {/* Delete icon */}
+                                        <TouchableOpacity
+                                            style={{ position: 'absolute', top: 8, right: 8, zIndex: 2 }}
+                                            onPress={async () => {
+                                                try {
+                                                    const accessToken = await AsyncStorage.getItem('access_token');
+                                                    await fetch(`${API_BASE_URL}/lend/${log.id}/`, {
+                                                        method: 'DELETE',
+                                                        headers: {
+                                                            'Authorization': `Bearer ${accessToken}`,
+                                                            'Content-Type': 'application/json',
+                                                        },
+                                                    });
+                                                    loadLendLogs();
+                                                } catch (e) {
+                                                    alert('Failed to delete lend');
+                                                }
+                                            }}
+                                        >
+                                            <MaterialCommunityIcons name="delete-outline" size={22} color="#EF4444" />
+                                        </TouchableOpacity>
                                         <Text style={{ fontWeight: 'bold', color: isDarkMode ? '#fff' : '#222' }}>Initiator: {initiatorUsername}</Text>
                                         <Text style={{ fontWeight: 'bold', color: isDarkMode ? '#fff' : '#222' }}>Participant: {participantUsername}</Text>
                                         <Text style={{ color: '#7C3AED', fontWeight: 'bold' }}>Amount: {log.amount}</Text>
@@ -609,7 +714,152 @@ const HomeScreen = () => {
                                         ) : null}
                                     </View>
                                 );
-                            })
+                                })}
+                                {lendLogs.length > 2 && (
+                                    <TouchableOpacity
+                                        style={{ alignSelf: 'center', marginTop: 8, backgroundColor: colors.primary, borderRadius: 8, paddingVertical: 6, paddingHorizontal: 18 }}
+                                        onPress={() => setShowAllLends(true)}
+                                    >
+                                        <Text style={{ color: 'white', fontWeight: 'bold' }}>See More</Text>
+                                    </TouchableOpacity>
+                                )}
+                                {/* Modal for all lend logs */}
+                                <Modal
+                                    visible={showAllLends}
+                                    animationType="slide"
+                                    transparent={true}
+                                    onRequestClose={() => setShowAllLends(false)}
+                                >
+                                    <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.3)', justifyContent: 'center', alignItems: 'center' }}>
+                                        <View style={{ backgroundColor: isDarkMode ? '#18181B' : 'white', borderRadius: 16, padding: 18, width: '92%', maxHeight: '80%' }}>
+                                            <Text style={{ fontWeight: 'bold', fontSize: 18, marginBottom: 12, color: isDarkMode ? '#fff' : '#222' }}>All Lend Logs</Text>
+                                            <ScrollView style={{ maxHeight: 400 }}>
+                                                {lendLogs.slice(2).map((log) => {
+                                                    const initiatorUsername = log.initiator_username || (log.initiator && (log.initiator.username || log.initiator.email || log.initiator.name)) || 'Unknown';
+                                                    const participantUsername = log.participant_username || (log.participant && (log.participant.username || log.participant.email || log.participant.name)) || 'Unknown';
+                                                    return (
+                                                        <View key={log.id} style={{ borderWidth: 1, borderColor: '#eee', borderRadius: 10, padding: 12, marginBottom: 10, backgroundColor: isDarkMode ? '#27272A' : '#F9FAFB', position: 'relative' }}>
+                                                            {/* Delete icon */}
+                                                            <TouchableOpacity
+                                                                style={{ position: 'absolute', top: 8, right: 8, zIndex: 2 }}
+                                                                onPress={async () => {
+                                                                    try {
+                                                                        const accessToken = await AsyncStorage.getItem('access_token');
+                                                                        await fetch(`${API_BASE_URL}/lend/${log.id}/`, {
+                                                                            method: 'DELETE',
+                                                                            headers: {
+                                                                                'Authorization': `Bearer ${accessToken}`,
+                                                                                'Content-Type': 'application/json',
+                                                                            },
+                                                                        });
+                                                                        loadLendLogs();
+                                                                    } catch (e) {
+                                                                        alert('Failed to delete lend');
+                                                                    }
+                                                                }}
+                                                            >
+                                                                <MaterialCommunityIcons name="delete-outline" size={22} color="#EF4444" />
+                                                            </TouchableOpacity>
+                                                            <Text style={{ fontWeight: 'bold', color: isDarkMode ? '#fff' : '#222' }}>Initiator: {initiatorUsername}</Text>
+                                                            <Text style={{ fontWeight: 'bold', color: isDarkMode ? '#fff' : '#222' }}>Participant: {participantUsername}</Text>
+                                                            <Text style={{ color: '#7C3AED', fontWeight: 'bold' }}>Amount: {log.amount}</Text>
+                                                            <Text>Type: {log.transaction_type === 'L' ? 'Lend' : 'Borrow'}</Text>
+                                                            <Text>Status: {log.is_verified ? 'Verified' : 'Not Verified'}</Text>
+                                                            <Text>Paid: {log.status === 'D' ? 'Yes' : 'No'}</Text>
+                                                            <Text>Due: {log.due_date}</Text>
+                                                            <Text>Description: {log.description}</Text>
+                                                            {/* Verify button if not verified */}
+                                                            {!log.is_verified && (
+                                                                <TouchableOpacity
+                                                                    style={{ marginTop: 8, backgroundColor: '#10B981', borderRadius: 8, paddingVertical: 6, paddingHorizontal: 14, alignSelf: 'flex-end', opacity: verifyingId === log.id ? 0.5 : 1 }}
+                                                                    disabled={verifyingId === log.id}
+                                                                    onPress={async () => {
+                                                                        setVerifyingId(log.id);
+                                                                        try {
+                                                                            const accessToken = await AsyncStorage.getItem('access_token');
+                                                                            await fetch(`${API_BASE_URL}/lend/${log.id}/verify/`, {
+                                                                                method: 'PATCH',
+                                                                                headers: {
+                                                                                    'Authorization': `Bearer ${accessToken}`,
+                                                                                    'Content-Type': 'application/json',
+                                                                                },
+                                                                            });
+                                                                            loadLendLogs();
+                                                                        } catch (e) {
+                                                                            alert('Failed to verify lend');
+                                                                        } finally {
+                                                                            setVerifyingId(null);
+                                                                        }
+                                                                    }}
+                                                                >
+                                                                    <Text style={{ color: 'white', fontWeight: 'bold' }}>{verifyingId === log.id ? 'Verifying...' : 'Verify'}</Text>
+                                                                </TouchableOpacity>
+                                                            )}
+                                                            {/* Paid button: show as red and disabled if status is 'D' (Done/Paid), else show button if status is 'A' (Approved) */}
+                                                            {log.status === 'D' ? (
+                                                                <View
+                                                                    style={{
+                                                                        marginTop: 8,
+                                                                        backgroundColor: '#EF4444',
+                                                                        borderRadius: 8,
+                                                                        paddingVertical: 6,
+                                                                        paddingHorizontal: 14,
+                                                                        alignSelf: 'flex-end',
+                                                                        opacity: 1
+                                                                    }}
+                                                                >
+                                                                    <Text style={{ color: 'white', fontWeight: 'bold' }}>Paid</Text>
+                                                                </View>
+                                                            ) : log.status === 'A' ? (
+                                                                <TouchableOpacity
+                                                                    style={{
+                                                                        marginTop: 8,
+                                                                        backgroundColor: '#F59E42',
+                                                                        borderRadius: 8,
+                                                                        paddingVertical: 6,
+                                                                        paddingHorizontal: 14,
+                                                                        alignSelf: 'flex-end',
+                                                                        opacity: verifyingId === log.id ? 0.5 : 1
+                                                                    }}
+                                                                    disabled={verifyingId === log.id}
+                                                                    onPress={async () => {
+                                                                        setVerifyingId(log.id);
+                                                                        try {
+                                                                            const accessToken = await AsyncStorage.getItem('access_token');
+                                                                            await fetch(`${API_BASE_URL}/lend/${log.id}/paid/`, {
+                                                                                method: 'PATCH',
+                                                                                headers: {
+                                                                                    'Authorization': `Bearer ${accessToken}`,
+                                                                                    'Content-Type': 'application/json',
+                                                                                },
+                                                                            });
+                                                                            loadLendLogs();
+                                                                        } catch (e) {
+                                                                            alert('Failed to mark as paid');
+                                                                        } finally {
+                                                                            setVerifyingId(null);
+                                                                        }
+                                                                    }}
+                                                                >
+                                                                    <Text style={{ color: 'white', fontWeight: 'bold' }}>
+                                                                        {verifyingId === log.id ? 'Marking...' : 'Mark as Paid'}
+                                                                    </Text>
+                                                                </TouchableOpacity>
+                                                            ) : null}
+                                                        </View>
+                                                    );
+                                                })}
+                                            </ScrollView>
+                                            <TouchableOpacity
+                                                style={{ alignSelf: 'center', marginTop: 8, backgroundColor: colors.primary, borderRadius: 8, paddingVertical: 6, paddingHorizontal: 18 }}
+                                                onPress={() => setShowAllLends(false)}
+                                            >
+                                                <Text style={{ color: 'white', fontWeight: 'bold' }}>Close</Text>
+                                            </TouchableOpacity>
+                                        </View>
+                                    </View>
+                                </Modal>
+                            </>
                         )}
                         <AddLendModal
                             visible={lendModalVisible}

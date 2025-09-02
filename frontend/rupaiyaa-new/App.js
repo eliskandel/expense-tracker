@@ -7,7 +7,10 @@ import { useContext } from 'react';
 import { StatusBar, View } from 'react-native';
 import { AuthContext, AuthProvider } from './src/context/AuthContext';
 import { ThemeContext, ThemeProvider } from './src/context/ThemeContext';
+
 import AddScreen from './src/screens/AddScreen';
+import EventExpenseScreen from './src/screens/EventExpenseScreen';
+import EventScreen from './src/screens/EventScreen';
 import GroupExpenseScreen from './src/screens/GroupExpenseScreen';
 import GroupsScreen from './src/screens/GroupsScreen';
 import HistoryScreen from './src/screens/HistoryScreen';
@@ -124,6 +127,8 @@ function AppNavigation() {
                         <Stack.Screen name="SetBudgetGoal" component={SetBudgetGoal} />
                         <Stack.Screen name="GroupExpense" component={GroupExpenseScreen} />
                         <Stack.Screen name="Notifications" component={NotificationsScreen} />
+                        <Stack.Screen name="EventScreen" component={EventScreen} />
+                        <Stack.Screen name="EventExpenseScreen" component={EventExpenseScreen} />
                     </>
                 ) : (
                     <Stack.Screen name="Auth" component={LoginScreen} />
