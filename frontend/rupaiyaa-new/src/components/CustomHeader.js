@@ -34,7 +34,7 @@ const CustomHeader = ({
             setNotifLoading(true);
             try {
                 const data = await fetchUnreadCount();
-                if (mounted) setUnreadCount(data.count || 0);
+                if (mounted) setUnreadCount(data.unread_count || 0);
             } catch {
                 if (mounted) setUnreadCount(0);
             } finally {
@@ -68,7 +68,8 @@ const CustomHeader = ({
                 setNotifLoading(true);
                 try {
                     const data = await fetchUnreadCount();
-                    if (isActive) setUnreadCount(data.count || 0);
+                    // Corrected: Use data.unread_count to get the correct value
+                    if (isActive) setUnreadCount(data.unread_count || 0);
                 } catch {
                     if (isActive) setUnreadCount(0);
                 } finally {
