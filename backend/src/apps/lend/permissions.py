@@ -7,7 +7,11 @@ class IsInitiatorOrParticipant(permissions.BasePermission):
     """
 
     def has_object_permission(self, request, view, obj):
-        # Read permissions are allowed to any user who is the initiator or participant.
-        if request.user and (obj.initiator == request.user or obj.participant == request.user):
-            return True
+        # Read/write permissions are allowed only to the initiator or participant.
+        if request.user and request.user.is_authenticated:
+            # Check the transaction on the verification object
+            if hasattr(obj, 'transaction'):
+                return obj.transaction.initiator == request.user or obj.transaction.participant == request.user
+            # For transaction objects directly
+            return obj.initiator == request.user or obj.participant == request.user
         return False

@@ -1,17 +1,10 @@
-from django_filters import rest_framework as filters
+import django_filters
 from .models import Transaction
 
-class TransactionFilter(filters.FilterSet):
-    is_verified = filters.BooleanFilter(method='filter_is_verified')
-
+class TransactionFilter(django_filters.FilterSet):
     class Meta:
         model = Transaction
         fields = {
             'transaction_type': ['exact'],
             'status': ['exact'],
         }
-    
-    def filter_is_verified(self, queryset, name, value):
-        # Filter transactions based on the verification status of their related
-        # TransactionVerification object.
-        return queryset.filter(is_verified=value)
