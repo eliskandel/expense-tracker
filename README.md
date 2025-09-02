@@ -61,72 +61,58 @@ Make sure you have installed:
    ```bash
    cd backend
 ````
+Build and start Docker containers:
 
-2. Build and start Docker containers:
+docker-compose up --build
 
-   ```bash
-   docker-compose up --build
-   ```
 
-3. Apply database migrations:
+Apply database migrations:
 
-   ```bash
-   docker-compose exec web python manage.py migrate
-   ```
+docker-compose exec web python manage.py migrate
 
-4. Create a superuser:
 
-   ```bash
-   docker-compose exec web python manage.py createsuperuser
-   ```
+Create a superuser:
 
-5. The backend server will run at:
+docker-compose exec web python manage.py createsuperuser
 
-   ```
-   http://localhost:8000
-   ```
 
----
+The backend server will run at:
 
-### 🔹 Frontend (React Native)
+http://localhost:8000
 
-1. Navigate to frontend folder:
+🔹 Frontend (React Native)
 
-   ```bash
-   cd frontend
-   ```
+Navigate to frontend folder:
 
-2. Install dependencies:
+cd frontend
 
-   ```bash
-   npm install
-   ```
 
-3. Start the app:
+Install dependencies:
 
-   ```bash
-   npm start
-   ```
+npm install
 
-4. Scan the QR code in your Expo Go app (iOS/Android) to run the mobile app.
 
----
+Start the app:
 
-## ▶️ Running Locally
+npm start
 
-1. Start the **backend** using Docker (`docker-compose up`).
-2. Run the **frontend** with `npm start`.
-3. The app will connect to your backend APIs running on `localhost:8000`.
-   (Update API URLs in frontend config if needed.)
 
----
+Scan the QR code in your Expo Go app (iOS/Android) to run the mobile app.
 
-## 📸 Screenshots / Demo (Optional)
+▶️ Running Locally
 
-You can generate **UI mockups** using Google AI Studio.
-Here’s a **prompt you can use**:
+Start the backend using Docker (docker-compose up).
 
-```
+Run the frontend with npm start.
+
+The app will connect to your backend APIs running on localhost:8000.
+(Update API URLs in frontend config if needed.)
+
+📸 Screenshots / Demo (Optional)
+
+You can generate UI mockups using Google AI Studio.
+Here’s a prompt you can use:
+
 Generate high-quality mobile UI screenshots for an app called "Rupaiyaa".
 The app is an expense tracker for students with features like:
 - Dashboard showing monthly budget vs expenses
@@ -136,31 +122,32 @@ The app is an expense tracker for students with features like:
 - Notifications for rent/electricity payments
 Design should look clean, modern, and student-friendly with a financial theme (soft blues, greens).
 Format outputs as app screenshots displayed on a smartphone mockup.
-```
+
+🚫 Contributing
+
+This project is part of a hackathon, and we are not accepting contributions at the moment.
+
+📅 Future Plans
+
+Hyper-Personalized Insights – Tailored recommendations for each user.
+
+Seamless Bank Integration – Sync with mobile banking apps.
+
+AI-Powered Financial Co-Pilot – Advanced budget optimization with AI.
+
+Decentralized Finance & Digital Assets – Support for crypto and DeFi.
+
+Enhanced Security – Stronger authentication and fraud prevention.
+
+⚠️ License
+
+No license is provided as this is a hackathon project.
+
 
 ---
 
-## 🚫 Contributing
-
-This project is part of a **hackathon**, and we are **not accepting contributions** at the moment.
-
----
-
-## 📅 Future Plans
-
-* **Hyper-Personalized Insights** – Tailored recommendations for each user.
-* **Seamless Bank Integration** – Sync with mobile banking apps.
-* **AI-Powered Financial Co-Pilot** – Advanced budget optimization with AI.
-* **Decentralized Finance & Digital Assets** – Support for crypto and DeFi.
-* **Enhanced Security** – Stronger authentication and fraud prevention.
-
----
-
-## ⚠️ License
-
-No license is provided as this is a **hackathon project**.
-
-```
+👉 Now, question for you:  
+Do you want me to also **document the API endpoints** (like `/auth/register`, `/expenses/`, 
 
 ---
 
