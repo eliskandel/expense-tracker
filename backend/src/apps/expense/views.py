@@ -6,7 +6,7 @@ from decimal import Decimal
 from django.contrib.auth import get_user_model
 from rest_framework.views import APIView
 from rest_framework import serializers
-
+from django.db.models import Q
 from .models import Expense, Category, Group, ExpenseShare, Settlement
 from .serializers import ExpenseSerializer, CategorySerializer, GroupSerializer, ExpenseShareSerializer, SettlementSerializer
 from .filters import ExpenseFilter
@@ -141,11 +141,23 @@ class GroupListCreate(generics.ListCreateAPIView):
     serializer_class = GroupSerializer
     permission_classes = [IsAuthenticated]
 
+    def get_queryset(self):
+        user = self.request.user
+        queryset = super().get_queryset()
+
+        group_id = self.request.query_params.get('group_id')
+        
+        if group_id:
+            # Filter for a specific group, ensuring the user is a member of it.
+            return queryset.filter(id=group_id, members=user)
+        else:
+            # If no group_id is provided, list all groups the user is a member of.
+            return queryset.filter(members=user)
+    
     def get_serializer_context(self):
         context = super().get_serializer_context()
         context['request'] = self.request
         return context
-
 
 class GroupDetail(generics.RetrieveUpdateDestroyAPIView):
     queryset = Group.objects.all()
@@ -157,12 +169,45 @@ class GroupDetail(generics.RetrieveUpdateDestroyAPIView):
 # Expense Share & Settlement Views
 # -------------------------------
 
+
+
+
+
 class ExpenseShareList(generics.ListAPIView):
     serializer_class = ExpenseShareSerializer
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        return ExpenseShare.objects.filter(user=self.request.user)
+        user = self.request.user
+        queryset = ExpenseShare.objects.all() # Start with all shares
+
+        expense_id = self.request.query_params.get('expense_id')
+
+        if expense_id:
+            # 1. Security Check: Ensure the user has access to the requested expense.
+            # This prevents a user from viewing shares of an expense they are not involved in.
+            try:
+                expense = Expense.objects.get(id=expense_id)
+            except Expense.DoesNotExist:
+                return ExpenseShare.objects.none()  # Return empty queryset if expense doesn't exist
+
+            # Check if the user is the one who paid, or is a member of the expense's group,
+            # or is listed as a share receiver.
+            if not (expense.paid_by == user or
+                    (expense.group and user in expense.group.members.all()) or
+                    expense.shares.filter(user=user).exists()):
+                return ExpenseShare.objects.none() # Return empty queryset if user has no access
+
+            # 2. Filter the queryset based on the expense_id.
+            # This returns all shares for that specific expense.
+            queryset = queryset.filter(expense_id=expense_id)
+
+        else:
+            # If no expense_id is provided, default to showing the user's personal shares.
+            # This is your original logic.
+            queryset = queryset.filter(user=user)
+
+        return queryset
 
 class ExpenseShareDetail(generics.RetrieveUpdateDestroyAPIView):
     queryset = ExpenseShare.objects.all()

@@ -3,9 +3,10 @@ from django.dispatch import receiver
 from django.db.models import Avg
 from decimal import Decimal
 
-from src.apps.expense.models import Expense
+from src.apps.expense.models import Expense, ExpenseShare
 from src.apps.common.tasks import send_user_mail
 from src.apps.notification.models import Notification  # optional
+
 
 ANOMALY_FACTOR = Decimal('1.5')  # 1.5x average
 
@@ -42,3 +43,22 @@ def expense_anomaly_alert(sender, instance, created, **kwargs):
         send_user_mail.delay(subject, recipients, message)
         # Optional: also save in DB
         # Notification.objects.create(recipient=user, message=message)
+
+
+@receiver(post_save, sender=Expense)
+def update_expense_shares_on_settlement(sender, instance, **kwargs):
+    """
+    Signal to update all related ExpenseShare objects when an Expense is settled.
+    This handles the case where an entire expense is marked as settled from the main expense object.
+    """
+    if instance.is_settled and instance.group:
+        # Get all related ExpenseShare objects that are not yet settled
+        unsettled_shares = ExpenseShare.objects.filter(
+            expense=instance,
+            is_settled=False
+        )
+        
+        # Check if there are any unsettled shares to avoid unnecessary updates
+        if unsettled_shares.exists():
+            # Update all of them in a single database query for efficiency
+            unsettled_shares.update(is_settled=True)
