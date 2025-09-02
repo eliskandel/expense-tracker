@@ -4,29 +4,36 @@ from django.conf import settings
 from src.apps.notification.models import Notification
 from src.apps.remainder.models import Reminder
 from django.utils import timezone
+from django.contrib.auth import get_user_model
 
 @shared_task
 def send_user_mail(subject, recipients, message, create_notification=True):
-
     # 1️⃣ Send email
-    mail = EmailMessage(
-        subject=subject,
-        body=message,
-        from_email=settings.EMAIL_HOST_USER,
-        to=recipients
-    )
-    mail.send()
+    try:
+        mail = EmailMessage(
+            subject=subject,
+            body=message,
+            from_email=settings.EMAIL_HOST_USER,
+            to=recipients
+        )
+        mail.send(fail_silently=False)
+        print(f"Email sent successfully to: {recipients}")
+    except Exception as e:
+        print(f"Failed to send email to {recipients}. Error: {e}")
 
     # 2️⃣ Create in-app notification
     if create_notification:
-        from django.contrib.auth import get_user_model
         User = get_user_model()
         for email in recipients:
             try:
                 user = User.objects.get(email=email)
                 Notification.objects.create(recipient=user, message=message)
+                print(f"Notification created for user with email: {email}")
             except User.DoesNotExist:
-                pass  # skip if no user with that email
+                print(f"Skipping notification creation: No user found with email '{email}'.")
+            except Exception as e:
+                print(f"Failed to create notification for user '{email}'. Error: {e}")
+
 
 @shared_task
 def send_reminder_notification(reminder_id):

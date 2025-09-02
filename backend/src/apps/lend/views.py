@@ -3,39 +3,11 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, BasePermission
 from rest_framework.views import APIView
 from django.db import transaction as db_transaction
+from django.db.models import Q
 
 from .models import Transaction
 from .serializers import TransactionSerializer, TransactionVerificationSerializer
-# from .permissions import IsParticipantOrReadOnly (Assuming this exists)
-
-# Placeholder for IsParticipantOrReadOnly for a self-contained example
-class IsParticipantOrReadOnly(BasePermission):
-    """
-    Custom permission to only allow participants of an object to edit it.
-    """
-    def has_object_permission(self, request, view, obj):
-        # Read permissions are allowed to any request
-        if request.method in ['GET', 'HEAD', 'OPTIONS']:
-            return True
-
-        # Write permissions are only allowed to the participant.
-        return obj.participant == request.user
-
-
-class IsInitiatorOrReadOnly(BasePermission):
-    """
-    Custom permission to only allow initiators of an object to delete it.
-    """
-    def has_object_permission(self, request, view, obj):
-        # Read permissions are allowed to any request
-        if request.method in ['GET', 'HEAD', 'OPTIONS']:
-            return True
-        
-        # Only the initiator can perform the DELETE action
-        if request.method == 'DELETE':
-            return obj.initiator == request.user
-            
-        return False # Deny all other methods for this permission class
+from .permissions import IsParticipantOrReadOnly, IsInitiatorOrReadOnly, IsInitiator, IsParticipant
 
 
 class TransactionListCreateView(generics.ListCreateAPIView):
@@ -45,6 +17,14 @@ class TransactionListCreateView(generics.ListCreateAPIView):
     queryset = Transaction.objects.all()
     serializer_class = TransactionSerializer
     permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        """
+        Filters the queryset to only return transactions where the user is either the initiator or the participant.
+        """
+        return self.queryset.filter(
+            Q(initiator=self.request.user) | Q(participant=self.request.user)
+        )
 
     def perform_create(self, serializer):
         """
@@ -84,22 +64,16 @@ class TransactionVerificationView(APIView):
     """
     API endpoint for the participant to verify a transaction.
     """
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsParticipant]
 
     def patch(self, request, id):
         try:
             transaction = Transaction.objects.get(id=id)
+            self.check_object_permissions(request, transaction)
         except Transaction.DoesNotExist:
             return Response(
                 {"detail": "Transaction not found."},
                 status=status.HTTP_404_NOT_FOUND
-            )
-
-        # Only participant can verify
-        if request.user != transaction.participant:
-            return Response(
-                {"detail": "You do not have permission to verify this transaction."},
-                status=status.HTTP_403_FORBIDDEN
             )
 
         # Already verified
@@ -128,22 +102,16 @@ class TransactionMarkPaidView(APIView):
     API endpoint to mark a transaction as 'PAID'.
     Only initiator or participant should be allowed.
     """
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsInitiator]
 
     def patch(self, request, id):
         try:
             transaction = Transaction.objects.get(id=id)
+            self.check_object_permissions(request, transaction)
         except Transaction.DoesNotExist:
             return Response(
                 {"detail": "Transaction not found."},
                 status=status.HTTP_404_NOT_FOUND
-            )
-
-        # Ensure user is initiator
-        if request.user != transaction.initiator:
-            return Response(
-                {"detail": "You do not have permission to mark this transaction as paid."},
-                status=status.HTTP_403_FORBIDDEN
             )
 
         # Transaction must be verified first
