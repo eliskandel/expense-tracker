@@ -1,10 +1,10 @@
-
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useContext } from 'react';
-import { View } from 'react-native';
+// CHANGE: Import StatusBar
+import { StatusBar, View } from 'react-native';
 import { AuthContext, AuthProvider } from './src/context/AuthContext';
 import { ThemeContext, ThemeProvider } from './src/context/ThemeContext';
 import AddScreen from './src/screens/AddScreen';
@@ -21,8 +21,9 @@ import './global.css';
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 
-// MainTabs and AppNavigation are now defined here, inside the component tree
-// but outside the main App component, to access the context providers.
+// No changes are needed in MainTabs, as it already uses the context correctly
+// for its custom styling. The navigation theme will handle the defaults,
+// and your custom styles will apply on top.
 function MainTabs() {
     const { colors, isDarkMode } = useContext(ThemeContext);
 
@@ -32,13 +33,13 @@ function MainTabs() {
                 headerShown: false,
                 tabBarShowLabel: false,
                 tabBarStyle: {
-                    backgroundColor: isDarkMode ? colors.card : colors.background,
+                    backgroundColor: colors.cardBackground, // This correctly uses your theme
                     borderTopWidth: 0,
                     height: 60,
                     paddingTop: 10,
                 },
                 tabBarActiveTintColor: colors.primary,
-                tabBarInactiveTintColor: isDarkMode ? colors.subtext : colors.subtext,
+                tabBarInactiveTintColor: colors.subtext,
             }}
         >
             <Tab.Screen
@@ -63,7 +64,7 @@ function MainTabs() {
                 name="Add"
                 component={AddScreen}
                 options={{
-                    tabBarIcon: ({ color }) => (
+                    tabBarIcon: () => (
                         <View className="bg-purple-700 w-16 h-16 rounded-full items-center justify-center -top-4 shadow-md">
                             <MaterialCommunityIcons name="plus" color="#FFFFFF" size={32} />
                         </View>
@@ -94,13 +95,27 @@ function MainTabs() {
 
 function AppNavigation() {
     const { isLoggedIn } = useContext(AuthContext);
-    const { isDarkMode } = useContext(ThemeContext); // Use ThemeContext here too for a complete example
+    // CHANGE: Destructure `navigationTheme` from the ThemeContext
+    const { isDarkMode, navigationTheme } = useContext(ThemeContext);
+
+    // CHANGE: Determine the status bar style based on the theme
+    const barStyle = isDarkMode ? 'light-content' : 'dark-content';
 
     // Lazy import to avoid circular dependency
     const SetBudgetGoal = require('./src/screens/SetBudgetGoal').default;
+    
     return (
-        <NavigationContainer>
-            <Stack.Navigator screenOptions={{ headerShown: false }}>
+        // CHANGE: Pass the dynamic navigationTheme to the container
+        <NavigationContainer theme={navigationTheme}>
+            {/* CHANGE: Add the StatusBar component to sync with the theme */}
+            <StatusBar barStyle={barStyle} backgroundColor={navigationTheme.colors.card} />
+
+            <Stack.Navigator 
+                // You can still keep headerShown: false if you have custom headers,
+                // but if you want to use the navigator's built-in header,
+                // removing this will allow the theme to style it automatically.
+                screenOptions={{ headerShown: false }}
+            >
                 {isLoggedIn ? (
                     <>
                         <Stack.Screen name="Main" component={MainTabs} />
@@ -114,16 +129,18 @@ function AppNavigation() {
             </Stack.Navigator>
         </NavigationContainer>
     );
-    
 }
 
 // The main App component wraps everything in providers
 export default function App() {
     return (
-        <ThemeProvider>
-            <AuthProvider>
+        // CHANGE: Swapped provider order for better dependency management.
+        // It's best practice for providers that depend on others (Theme -> Auth)
+        // to be nested inside the ones they depend on.
+        <AuthProvider>
+            <ThemeProvider>
                 <AppNavigation />
-            </AuthProvider>
-        </ThemeProvider>
+            </ThemeProvider>
+        </AuthProvider>
     );
 }

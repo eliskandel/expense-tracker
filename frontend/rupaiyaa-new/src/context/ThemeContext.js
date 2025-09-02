@@ -1,16 +1,21 @@
+// src/context/ThemeContext.js
+
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createContext, useContext, useEffect, useState } from 'react';
 import { useColorScheme } from 'react-native';
 import { updateThemePreference } from '../api/apiService';
 import { AuthContext } from './AuthContext'; // Import AuthContext
 
+// 1. Import themes from React Navigation
+import { DefaultTheme, DarkTheme } from '@react-navigation/native';
+
 export const ThemeContext = createContext();
 
 export const ThemeProvider = ({ children }) => {
-    // Do NOT use AuthContext at the top level here! It will be undefined during provider setup.
     const systemColorScheme = useColorScheme();
     const [isDarkMode, setIsDarkMode] = useState(systemColorScheme === 'dark');
 
+    // Your custom color palettes remain the same
     const lightColors = {
         background: '#F5F3FF',
         cardBackground: '#FFFFFF',
@@ -20,6 +25,7 @@ export const ThemeProvider = ({ children }) => {
         text: '#1E293B',
         error: '#EF4444',
         success: '#22C55E',
+        border: '#E5E7EB', // Added for navigation
     };
     const darkColors = {
         background: '#18181B',
@@ -30,9 +36,38 @@ export const ThemeProvider = ({ children }) => {
         text: '#F3F4F6',
         error: '#F87171',
         success: '#4ADE80',
+        border: '#3F3F46', // Added for navigation
     };
 
     const colors = isDarkMode ? darkColors : lightColors;
+
+    // 2. Create React Navigation compatible theme objects
+    const MyLightTheme = {
+        ...DefaultTheme,
+        colors: {
+            ...DefaultTheme.colors,
+            primary: lightColors.primary,
+            background: lightColors.background,
+            card: lightColors.cardBackground, // This styles the header
+            text: lightColors.text,
+            border: lightColors.border,
+        },
+    };
+
+    const MyDarkTheme = {
+        ...DarkTheme,
+        colors: {
+            ...DarkTheme.colors,
+            primary: darkColors.primary,
+            background: darkColors.background,
+            card: darkColors.cardBackground, // This styles the header
+            text: darkColors.text,
+            border: darkColors.border,
+        },
+    };
+
+    // This is the theme object that NavigationContainer will use
+    const navigationTheme = isDarkMode ? MyDarkTheme : MyLightTheme;
 
     // Load theme preference from AsyncStorage on component mount
     useEffect(() => {
@@ -49,17 +84,18 @@ export const ThemeProvider = ({ children }) => {
             }
         };
         loadThemePreference();
-    }, []);
+    }, [systemColorScheme]); // Depend on systemColorScheme too
 
     // Toggle theme and update locally and on backend
     const toggleTheme = async () => {
+        // ... your toggleTheme function remains exactly the same
         const newMode = !isDarkMode;
         setIsDarkMode(newMode);
         try {
             await AsyncStorage.setItem('themePreference', newMode ? 'dark' : 'light');
             console.log('ThemeContext: Saved theme preference locally:', newMode ? 'dark' : 'light');
 
-            // Only get AuthContext here, after providers are mounted
+            // Using a function to get context, good approach!
             try {
                 const { id: userId, isLoggedIn } = useContext(AuthContext);
                 if (isLoggedIn && userId) {
@@ -69,15 +105,10 @@ export const ThemeProvider = ({ children }) => {
                     console.warn('ThemeContext: Not logged in or userId missing, skipping backend theme update.');
                 }
             } catch (err) {
-                // If context is not available, just skip backend update
                 console.warn('ThemeContext: AuthContext not available in toggleTheme.');
             }
         } catch (e) {
             console.error('ThemeContext: Failed to save theme preference locally or to backend:', e.response?.data || e.message);
-            // Optionally, revert theme if backend update fails and provide feedback
-            // setIsDarkMode(!newMode);
-            // AsyncStorage.setItem('themePreference', !newMode ? 'dark' : 'light');
-            // Alert.alert('Error', 'Failed to update theme preference on server.');
         }
     };
 
@@ -85,6 +116,8 @@ export const ThemeProvider = ({ children }) => {
         isDarkMode,
         toggleTheme,
         colors,
+        // 3. Add the navigation theme to the context value
+        navigationTheme,
     };
 
     return (
