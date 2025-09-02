@@ -54,65 +54,80 @@ Make sure you have installed:
 - [Python 3.10+](https://www.python.org/)
 
 ---
+## ⚙️ Installation & Setup
 
-### 🔹 Backend (Django + PostgreSQL)
+### 🔹 Backend (Django + PostgreSQL with Docker)
 
-1. Navigate to backend folder:
+1. **Navigate to backend folder:**
    ```bash
    cd backend
-````
-Build and start Docker containers:
+   ```
 
-docker-compose up --build
+2. **Build and start Docker containers:**
+   ```bash
+   docker-compose up --build
+   ```
 
+3. **Apply database migrations:**
+   ```bash
+   docker-compose exec web python manage.py migrate
+   ```
 
-Apply database migrations:
+4. **Create a superuser:**
+   ```bash
+   docker-compose exec web python manage.py createsuperuser
+   ```
 
-docker-compose exec web python manage.py migrate
+5. **Backend server will run at:**
+   ```
+   http://localhost:8000
+   ```
 
+### 🔹 Frontend (React Native)
 
-Create a superuser:
+1. **Navigate to frontend folder:**
+   ```bash
+   cd frontend
+   ```
 
-docker-compose exec web python manage.py createsuperuser
+2. **Install dependencies:**
+   ```bash
+   npm install
+   ```
 
+3. **Start the app:**
+   ```bash
+   npm start
+   ```
 
-The backend server will run at:
+4. **Scan the QR code** in your Expo Go app (iOS/Android) to run the mobile app.
 
-http://localhost:8000
+## ▶️ Running Locally
 
-🔹 Frontend (React Native)
+1. **Start the backend using Docker:**
+   ```bash
+   docker-compose up
+   ```
 
-Navigate to frontend folder:
+2. **Run the frontend with:**
+   ```bash
+   npm start
+   ```
 
-cd frontend
+3. **The app will connect to your backend APIs running on:**
+   ```
+   http://localhost:8000
+   ```
 
+> **Note:** Update API URLs in frontend config if needed.
 
-Install dependencies:
+## 📸 Screenshots / Demo
 
-npm install
+*Screenshots coming soon...*
 
+You can generate UI mockups using Google AI Studio with this prompt:
 
-Start the app:
-
-npm start
-
-
-Scan the QR code in your Expo Go app (iOS/Android) to run the mobile app.
-
-▶️ Running Locally
-
-Start the backend using Docker (docker-compose up).
-
-Run the frontend with npm start.
-
-The app will connect to your backend APIs running on localhost:8000.
-(Update API URLs in frontend config if needed.)
-
-📸 Screenshots / Demo (Optional)
-
-You can generate UI mockups using Google AI Studio.
-Here’s a prompt you can use:
-
+```
 Generate high-quality mobile UI screenshots for an app called "Rupaiyaa".
 The app is an expense tracker for students with features like:
 - Dashboard showing monthly budget vs expenses
@@ -120,37 +135,27 @@ The app is an expense tracker for students with features like:
 - Lend & borrow contract confirmation UI
 - AI chatbot screen for financial advice (powered by Gemini)
 - Notifications for rent/electricity payments
+
 Design should look clean, modern, and student-friendly with a financial theme (soft blues, greens).
 Format outputs as app screenshots displayed on a smartphone mockup.
+```
 
-🚫 Contributing
+## 📅 Future Plans
+
+- 🎯 **Hyper-Personalized Insights** – Tailored recommendations for each user
+- 🏦 **Seamless Bank Integration** – Sync with mobile banking apps
+- 🤖 **AI-Powered Financial Co-Pilot** – Advanced budget optimization with AI
+- 🌐 **Decentralized Finance & Digital Assets** – Support for crypto and DeFi
+- 🔐 **Enhanced Security** – Stronger authentication and fraud prevention
+
+## 🚫 Contributing
 
 This project is part of a hackathon, and we are not accepting contributions at the moment.
 
-📅 Future Plans
-
-Hyper-Personalized Insights – Tailored recommendations for each user.
-
-Seamless Bank Integration – Sync with mobile banking apps.
-
-AI-Powered Financial Co-Pilot – Advanced budget optimization with AI.
-
-Decentralized Finance & Digital Assets – Support for crypto and DeFi.
-
-Enhanced Security – Stronger authentication and fraud prevention.
-
-⚠️ License
+## ⚠️ License
 
 No license is provided as this is a hackathon project.
 
-
 ---
 
-👉 Now, question for you:  
-Do you want me to also **document the API endpoints** (like `/auth/register`, `/expenses/`, 
-
----
-
-👉 Now, question for you:  
-Do you want me to also **document the API endpoints** (like `/auth/register`, `/expenses/`, `/split/` etc.) in the README, or should we keep it more high-level for hackathon/demo purposes?
-```
+**Made with ❤️ for students by students**
