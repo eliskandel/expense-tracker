@@ -68,7 +68,7 @@ const GroupExpenseScreen = () => {
     try {
       const accessToken = await getAccessToken();
       if (!accessToken) throw new Error('No access token');
-      const res = await fetch(`${API_BASE_URL}/expense/${group.id}`, {
+      const res = await fetch(`${API_BASE_URL}/expense/groups/?group_id=${group.id}`, {
         headers: { 'Authorization': `Bearer ${accessToken}` }
       });
       
@@ -79,8 +79,25 @@ const GroupExpenseScreen = () => {
       const data = await res.json();
       console.log('Group expenses response status:', res.status);
       console.log('Group expenses data:', data);
-      setGroupExpenses(Array.isArray(data.expenses) ? data.expenses : []);
-      setGroupMembers(Array.isArray(data.members) ? data.members : []);
+      // Support data.expenses/members, data.results.expenses/members, and data.results[0].expenses/members
+      let expensesArr = [];
+      let membersArr = [];
+      if (Array.isArray(data.expenses)) {
+        expensesArr = data.expenses;
+      } else if (data.results && Array.isArray(data.results.expenses)) {
+        expensesArr = data.results.expenses;
+      } else if (Array.isArray(data.results) && data.results[0] && Array.isArray(data.results[0].expenses)) {
+        expensesArr = data.results[0].expenses;
+      }
+      if (Array.isArray(data.members)) {
+        membersArr = data.members;
+      } else if (data.results && Array.isArray(data.results.members)) {
+        membersArr = data.results.members;
+      } else if (Array.isArray(data.results) && data.results[0] && Array.isArray(data.results[0].members)) {
+        membersArr = data.results[0].members;
+      }
+      setGroupExpenses(expensesArr);
+      setGroupMembers(membersArr);
     } catch (err) {
       console.error('Error fetching group expenses:', err);
       setGroupExpenses([]);
@@ -171,18 +188,47 @@ const GroupExpenseScreen = () => {
       // Format date as YYYY-MM-DD
       const formattedDate = expenseDate.toISOString().split('T')[0];
 
+
+      // Build shares array for payload
+      let shares = [];
+      if (finalSplitType === 'equal') {
+        // For equal split, divide amount equally among group members
+        const memberIds = groupMembers.map(m => m.id);
+        const shareAmount = calculatedTotalAmount / memberIds.length;
+        shares = memberIds.map(userId => ({
+          user: userId,
+          amount_owed: shareAmount.toString(),
+          item_name: ''
+        }));
+      } else if (finalSplitType === 'manual') {
+        shares = Object.entries(manualSplits).map(([user, amount]) => ({
+          user,
+          amount_owed: amount.toString(),
+          item_name: ''
+        }));
+      } else if (finalSplitType === 'itemized') {
+        shares = [];
+        itemizedExpenses.forEach(item => {
+          item.members.forEach(userId => {
+            shares.push({
+              user: userId,
+              amount_owed: item.amount.toString(),
+              item_name: item.item_name
+            });
+          });
+        });
+      }
+
       const expenseData = {
+        amount: totalAmount,
         description: expenseDescription,
-        category_id: selectedCategory,
-        amount: calculatedTotalAmount,
-        total_amount: calculatedTotalAmount,
-        created_by: id,
-        split_type: finalSplitType, // Will be 'equal', 'manual', or 'itemized'
-        paid_by: expensePaidBy,
-        is_settled: isSettled,
-        group_id: group.id,
         date: formattedDate,
-        ...(finalSplitType !== 'equal' && { items: expenseItems })
+        category_id: selectedCategory,
+        group: group.id,
+        split_type: finalSplitType,
+        shares,
+        created_by: id,
+        is_settled: isSettled
       };
 
       console.log('Sending expense data:', expenseData);
