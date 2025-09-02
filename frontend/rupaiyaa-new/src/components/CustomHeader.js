@@ -29,6 +29,7 @@ const CustomHeader = ({
 
     useEffect(() => {
         let mounted = true;
+        let intervalId;
         const loadUnreadCount = async () => {
             setNotifLoading(true);
             try {
@@ -41,6 +42,8 @@ const CustomHeader = ({
             }
         };
         loadUnreadCount();
+        // Poll every 10 seconds
+        intervalId = setInterval(loadUnreadCount, 10000);
         // Listen for notificationRead event to update unread count
         const handleNotificationRead = async (e) => {
             await loadUnreadCount();
@@ -50,6 +53,7 @@ const CustomHeader = ({
         }
         return () => {
             mounted = false;
+            if (intervalId) clearInterval(intervalId);
             if (typeof window !== 'undefined' && window.removeEventListener) {
                 window.removeEventListener('notificationRead', handleNotificationRead);
             }
