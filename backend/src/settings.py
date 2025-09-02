@@ -54,9 +54,11 @@ INSTALLED_APPS = [
     "src.apps.expense",
     "src.apps.budget",
     "src.apps.lend",
-    "src.apps.notification"
+    "src.apps.notification",
+    "src.apps.chatbot",
 
 ]
+GOOGLE_GEMINI_API_KEY = "AIzaSyAz8tsel5AzsH7nj2sGTJLpwEnGKtZ6b6Q"
 
 MIDDLEWARE = [
     "corsheaders.middleware.CorsMiddleware",
