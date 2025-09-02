@@ -266,9 +266,22 @@ const GroupExpenseScreen = () => {
     }
   };
 
-  const handleExpensePress = (expense) => {
+  const handleExpensePress = async (expense) => {
     setSelectedExpense(expense);
     setExpenseDetailVisible(true);
+    try {
+      const accessToken = await getAccessToken();
+      const res = await fetch(`${API_BASE_URL}/expense/expenseshares/?expense_id=${expense.id}`, {
+        headers: { 'Authorization': `Bearer ${accessToken}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        // Merge the detailed info into selectedExpense
+        setSelectedExpense(prev => ({ ...prev, ...data }));
+      }
+    } catch (err) {
+      console.error('Error fetching expense share details:', err);
+    }
   };
 
   const handleUpdateSettlement = async (expenseId, newSettlementStatus) => {
@@ -869,6 +882,20 @@ const GroupExpenseScreen = () => {
                     </View>
                   </View>
 
+                  {/* Expense Shares Details (if available) */}
+                  {selectedExpense.results && Array.isArray(selectedExpense.results) && selectedExpense.results.length > 0 && (
+                    <View style={styles.detailSection}>
+                      <Text style={[styles.detailLabel, { color: isDarkMode ? '#9CA3AF' : '#6B7280' }]}>Expense Shares</Text>
+                      {selectedExpense.results.map((share, idx) => (
+                        <View key={idx} style={{ marginBottom: 8, padding: 8, backgroundColor: isDarkMode ? '#23272e' : '#F3F4F6', borderRadius: 8 }}>
+                          <Text style={{ color: isDarkMode ? '#fff' : '#222', fontWeight: 'bold' }}>User: {share.user?.username || share.user?.id || 'N/A'}</Text>
+                          <Text style={{ color: colors.primary }}>Owes: रू {share.amount_owed}</Text>
+                          {/* <Text style={{ color: share.is_settled ? '#10B981' : '#F59E42' }}>{share.is_settled ? 'Settled' : 'Not Settled'}</Text> */}
+                          {share.item_name && <Text style={{ color: isDarkMode ? '#fff' : '#222' }}>Item: {share.item_name}</Text>}
+                        </View>
+                      ))}
+                    </View>
+                  )}
                   {/* Items Details (if available) */}
                   {selectedExpense.items && selectedExpense.items.length > 0 && (
                     <View style={styles.detailSection}>
