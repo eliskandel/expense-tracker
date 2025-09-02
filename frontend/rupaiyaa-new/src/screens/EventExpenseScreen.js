@@ -51,8 +51,8 @@ const EventExpenseScreen = () => {
       });
       if (res.ok) {
         const data = await res.json();
-        // Always use data.total_expense as the total
-        setTotalExpense(typeof data.total_expense === 'number' ? data.total_expense : 0);
+        // Always use data.total_expenses as the total
+        setTotalExpense(typeof data.total_expenses === 'number' ? data.total_expenses : 0);
       } else {
         setTotalExpense(0);
       }
@@ -74,16 +74,16 @@ const EventExpenseScreen = () => {
     setLoading(true);
     try {
       const accessToken = await AsyncStorage.getItem('access_token');
-        const res = await fetch(`${API_BASE_URL}/event/expenses/`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${accessToken}`,
-          },
+      const res = await fetch(`${API_BASE_URL}/event/expenses/?event_id=${eventId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${accessToken}`,
+        },
           body: JSON.stringify({
             description,
             amount,
-            event: eventId
+            event: eventId,
           }),
         });
       if (!res.ok) throw new Error('Failed to add expense');

@@ -33,7 +33,7 @@ const EventScreen = () => {
             if (res.ok) {
               const data = await res.json();
               // Only total_expense is sent
-              summaryResults[ev.id] = typeof data.total_expense === 'number' ? data.total_expense : 0;
+              summaryResults[ev.id] = typeof data.total_expenses === 'number' ? data.total_expenses : 0;
             } else {
               summaryResults[ev.id] = 0;
             }

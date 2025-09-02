@@ -84,30 +84,27 @@ class ExpenseListCreateView(generics.ListCreateAPIView):
             if not shares_data:
                 raise serializers.ValidationError({"shares": "Shares data is required for itemized split."})
 
-            # --- Validation for unique (user, item_name) pairs ---
-            seen_shares = set()
-            for share in shares_data:
-                user_id = share['user']
-                item_name = share.get('item_name', '')
-                unique_key = (user_id, item_name)
-                if unique_key in seen_shares:
-                    raise serializers.ValidationError(
-                        {"shares": f"Duplicate entry found for user ID '{user_id}' and item '{item_name}'."}
-                    )
-                seen_shares.add(unique_key)
-            # --- End of validation ---
-
             total_shared = sum(Decimal(share['amount_owed']) for share in shares_data)
             if total_shared != expense.amount:
                 raise serializers.ValidationError({"shares": "Total of itemized shares must equal the expense amount."})
 
             for share in shares_data:
+                user_id = share['user']
+                item_name = share.get('item_name', '')
+
+                # Check for existing share with the same combination
+                if ExpenseShare.objects.filter(expense=expense, user_id=user_id, item_name=item_name).exists():
+                     raise serializers.ValidationError(
+                         {"shares": f"Duplicate item '{item_name}' for user '{user_id}' already exists for this expense."}
+                     )
+
                 ExpenseShare.objects.create(
                     expense=expense,
-                    user_id=share['user'],
+                    user_id=user_id,
                     amount_owed=share['amount_owed'],
-                    item_name=share.get('item_name', '')
+                    item_name=item_name
                 )
+
 
 # Rest of the code remains the same...
 
