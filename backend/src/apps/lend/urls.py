@@ -2,16 +2,18 @@ from django.urls import path
 from .views import (
     TransactionListCreateView,
     TransactionRetrieveUpdateDestroyView,
-    TransactionVerificationDetailView,
+    TransactionVerificationView,
+    TransactionMarkPaidView
 )
 
 urlpatterns = [
-    # List all transactions or create a new one
+    # URL for listing all transactions and creating a new one
     path('', TransactionListCreateView.as_view(), name='transaction-list-create'),
 
-    # Retrieve, update, or delete a single transaction by its ID
-    path('<int:pk>/', TransactionRetrieveUpdateDestroyView.as_view(), name='transaction-detail'),
+    # URL for retrieving, updating, or deleting a specific transaction
+    path('<int:id>/', TransactionRetrieveUpdateDestroyView.as_view(), name='transaction-detail'),
+    
 
-    # View and update a transaction's verification status by its transaction ID
-    path('<int:pk>/verify/', TransactionVerificationDetailView.as_view(), name='transaction-verify'),
+    path('<int:id>/verify/', TransactionVerificationView.as_view(), name='transaction-verify'),
+    path('<int:id>/paid/', TransactionMarkPaidView.as_view(), name='transaction-mark-paid'),
 ]

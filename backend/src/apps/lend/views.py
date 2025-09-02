@@ -1,99 +1,131 @@
-from rest_framework import generics
-from rest_framework.permissions import IsAuthenticated
+from rest_framework import generics, status
 from rest_framework.response import Response
-from django_filters import rest_framework as filters
-from django.db.models import Q
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.views import APIView
 from django.db import transaction as db_transaction
-from .models import Transaction, TransactionVerification
+
+from .models import Transaction
 from .serializers import TransactionSerializer, TransactionVerificationSerializer
-from .permissions import IsInitiatorOrParticipant
-from .filters import TransactionFilter
+from .permissions import IsParticipantOrReadOnly, IsInitiatorOrReadOnly
+
 
 class TransactionListCreateView(generics.ListCreateAPIView):
     """
-    API view to list all transactions for the authenticated user and create new ones.
+    API endpoint that allows listing all transactions or creating a new transaction.
     """
+    queryset = Transaction.objects.all()
     serializer_class = TransactionSerializer
     permission_classes = [IsAuthenticated]
-    filter_backends = (filters.DjangoFilterBackend,)
-    filterset_class = TransactionFilter
-
-    def get_queryset(self):
-        # This check prevents errors during schema generation for anonymous users
-        if getattr(self, "swagger_fake_view", False):
-            return Transaction.objects.none()
-
-        user = self.request.user
-        return Transaction.objects.filter(
-            Q(initiator=user) | Q(participant=user)
-        ).order_by('-created_at')
 
     def perform_create(self, serializer):
-        serializer.save(initiator=self.request.user)
+        """
+        Automatically set the initiator of the transaction to the current user.
+        Also mark initiator as verified on creation.
+        """
+        with db_transaction.atomic():
+            instance = serializer.save(
+                initiator=self.request.user,
+                verified_by_initiator=True
+            )
+            # If participant == initiator, mark participant verified too
+            if instance.participant == instance.initiator:
+                instance.verified_by_participant = True
+                instance.save(update_fields=["verified_by_participant"])
 
 
 class TransactionRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
     """
-    API view to retrieve, update, or delete a single transaction.
+    API endpoint that allows retrieving, updating, or deleting a specific transaction.
     """
+    queryset = Transaction.objects.all()
     serializer_class = TransactionSerializer
-    permission_classes = [IsAuthenticated, IsInitiatorOrParticipant]
+    permission_classes = [IsAuthenticated, IsParticipantOrReadOnly]
+    lookup_field = "id"
 
-    def get_queryset(self):
-        # This check prevents errors during schema generation for anonymous users
-        if getattr(self, "swagger_fake_view", False):
-            return Transaction.objects.none()
-            
-        user = self.request.user
-        return Transaction.objects.filter(
-            Q(initiator=user) | Q(participant=user)
-        ).order_by('-created_at')
+    def get_permissions(self):
+        if self.request.method == 'DELETE':
+            return [IsAuthenticated(), IsInitiatorOrReadOnly()]
+        
+
+    
 
 
+class TransactionVerificationView(APIView):
+    """
+    API endpoint for the participant to verify a transaction.
+    """
+    permission_classes = [IsAuthenticated]
 
-class TransactionVerificationDetailView(generics.RetrieveUpdateAPIView):
+    def patch(self, request, id):
+        try:
+            transaction = Transaction.objects.get(id=id)
+        except Transaction.DoesNotExist:
+            return Response(
+                {"detail": "Transaction not found."},
+                status=status.HTTP_404_NOT_FOUND
+            )
 
-    serializer_class = TransactionVerificationSerializer
-    permission_classes = [IsAuthenticated, IsInitiatorOrParticipant]
-    lookup_field = 'pk' # Allows lookup by the transaction's primary key
+        # Only participant can verify
+        if request.user != transaction.participant:
+            return Response(
+                {"detail": "You do not have permission to verify this transaction."},
+                status=status.HTTP_403_FORBIDDEN
+            )
 
-    def get_queryset(self):
-        # This check prevents errors during schema generation for anonymous users
-        if getattr(self, "swagger_fake_view", False):
-            return TransactionVerification.objects.none()
+        # Already verified
+        if transaction.is_verified:
+            return Response(
+                {"detail": "This transaction is already verified."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
-        user = self.request.user
-        return TransactionVerification.objects.filter(
-            Q(transaction__initiator=user) | Q(transaction__participant=user)
-        )
+        # Mark participant verification
+        transaction.verified_by_participant = True
 
-    @db_transaction.atomic
-    def update(self, request, *args, **kwargs):
-        instance = self.get_object()
-        user = request.user
-
-        # Mark verification based on the user's role
-        if user == instance.transaction.initiator:
-            instance.verified_by_initiator = True
-        elif user == instance.transaction.participant:
-            instance.verified_by_participant = True
-        else:
-            return Response({"detail": "You are not allowed to verify this transaction."}, status=403)
-
-        instance.save()
-
-        # Update main transaction status if both verified
-        transaction = instance.transaction
-        if instance.verified_by_initiator and instance.verified_by_participant:
-            transaction.status = Transaction.ACCEPTED
+        # If both verified → mark as accepted
+        if transaction.verified_by_initiator and transaction.verified_by_participant:
             transaction.is_verified = True
-            transaction.save()
+            transaction.status = Transaction.ACCEPTED
 
-            # Optional: update reciprocal transaction if linked
-            if hasattr(transaction, "reciprocal_transaction") and transaction.reciprocal_transaction:
-                reciprocal = transaction.reciprocal_transaction
-                reciprocal.status = Transaction.ACCEPTED
-                reciprocal.save()
+        transaction.save()
 
-        serializer = self.get_serializer(instance)
-        return Response(serializer.data)
+        serializer = TransactionVerificationSerializer(transaction)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class TransactionMarkPaidView(APIView):
+    """
+    API endpoint to mark a transaction as 'PAID'.
+    Only initiator or participant should be allowed.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def patch(self, request, id):
+        try:
+            transaction = Transaction.objects.get(id=id)
+        except Transaction.DoesNotExist:
+            return Response(
+                {"detail": "Transaction not found."},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        # Ensure user is participant or initiator
+        if request.user not in [transaction.initiator, transaction.participant]:
+            return Response(
+                {"detail": "You do not have permission to mark this transaction as paid."},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        # Transaction must be verified first
+        if not transaction.is_verified:
+            return Response(
+                {"detail": "Transaction must be verified before marking as paid."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Mark as paid
+        transaction.status = Transaction.PAID
+        transaction.save(update_fields=["status"])
+
+        serializer = TransactionSerializer(transaction)
+        return Response(serializer.data, status=status.HTTP_200_OK)

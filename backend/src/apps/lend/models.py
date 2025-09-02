@@ -5,10 +5,8 @@ from src.apps.auth.models import User
 class Transaction(models.Model):
  
     LEND = 'L'
-    BORROW = 'B'
     TYPE_CHOICES = [
         (LEND, 'Lend'),
-        (BORROW, 'Borrow'),
     ]
 
     PENDING = 'P'
@@ -69,25 +67,6 @@ class Transaction(models.Model):
     updated_at = models.DateTimeField(
         auto_now=True
     )
-    is_verified = models.BooleanField(
-        default=False,
-        help_text="Indicates if both the initiator and the participant have verified the transaction."
-    )
-
-    class Meta:
-        ordering = ['-created_at']
-
-    def __str__(self):
-        return f"{self.initiator} {self.get_transaction_type_display()} {self.amount} to {self.participant}"
-
-
-class TransactionVerification(models.Model):
-    transaction = models.OneToOneField(
-        Transaction,
-        on_delete=models.CASCADE,
-        related_name='verification',
-        help_text="The transaction being verified."
-    )
     verified_by_initiator = models.BooleanField(
         default=False,
         help_text="Whether the initiator has verified the transaction."
@@ -96,12 +75,14 @@ class TransactionVerification(models.Model):
         default=False,
         help_text="Whether the participant has verified the transaction."
     )
-    created_at = models.DateTimeField(
-        auto_now_add=True
-    )
-    updated_at = models.DateTimeField(
-        auto_now=True
+    is_verified = models.BooleanField(
+        default=False,
+        help_text="Indicates if both the initiator and the participant have verified the transaction."
     )
 
+
+    class Meta:
+        ordering = ['-created_at']
+
     def __str__(self):
-        return f"Verification for Transaction {self.transaction.id}"
+        return f"{self.initiator} {self.get_transaction_type_display()} {self.amount} to {self.participant}"
