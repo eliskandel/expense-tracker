@@ -8,10 +8,6 @@ THRESHOLD_WARNING = 0.8  # 80% of budget
 
 @receiver(post_save, sender=Budget)
 def budget_threshold_alert(sender, instance, created, **kwargs):
-    """
-    Sends email + notification when budget exceeds 80% of allowed expense.
-    Triggered whenever a Budget instance is created or updated.
-    """
     if instance.total_expense >= instance.allowed_expense * Decimal(THRESHOLD_WARNING):
         subject = f"Budget Alert for {instance.month.strftime('%B %Y')}"
         message = (

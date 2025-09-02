@@ -25,6 +25,7 @@ urlpatterns = [
                         path("expense/", include("src.apps.expense.urls")),
                         path("budget/", include("src.apps.budget.urls")),
                         path("lend/", include("src.apps.lend.urls")),
+                        path("notification/", include("src.apps.notification.urls")),
 ]
 
 urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
