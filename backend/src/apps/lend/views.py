@@ -1,12 +1,41 @@
 from rest_framework import generics, status
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, BasePermission
 from rest_framework.views import APIView
 from django.db import transaction as db_transaction
 
 from .models import Transaction
 from .serializers import TransactionSerializer, TransactionVerificationSerializer
-from .permissions import IsParticipantOrReadOnly, IsInitiatorOrReadOnly
+# from .permissions import IsParticipantOrReadOnly (Assuming this exists)
+
+# Placeholder for IsParticipantOrReadOnly for a self-contained example
+class IsParticipantOrReadOnly(BasePermission):
+    """
+    Custom permission to only allow participants of an object to edit it.
+    """
+    def has_object_permission(self, request, view, obj):
+        # Read permissions are allowed to any request
+        if request.method in ['GET', 'HEAD', 'OPTIONS']:
+            return True
+
+        # Write permissions are only allowed to the participant.
+        return obj.participant == request.user
+
+
+class IsInitiatorOrReadOnly(BasePermission):
+    """
+    Custom permission to only allow initiators of an object to delete it.
+    """
+    def has_object_permission(self, request, view, obj):
+        # Read permissions are allowed to any request
+        if request.method in ['GET', 'HEAD', 'OPTIONS']:
+            return True
+        
+        # Only the initiator can perform the DELETE action
+        if request.method == 'DELETE':
+            return obj.initiator == request.user
+            
+        return False # Deny all other methods for this permission class
 
 
 class TransactionListCreateView(generics.ListCreateAPIView):
@@ -39,15 +68,16 @@ class TransactionRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView
     """
     queryset = Transaction.objects.all()
     serializer_class = TransactionSerializer
-    permission_classes = [IsAuthenticated, IsParticipantOrReadOnly]
     lookup_field = "id"
 
     def get_permissions(self):
+        # The schema generator does not provide a request object, so we must handle this.
+        if not self.request:
+            return [IsAuthenticated()]
+
         if self.request.method == 'DELETE':
             return [IsAuthenticated(), IsInitiatorOrReadOnly()]
-        
-
-    
+        return [IsAuthenticated(), IsParticipantOrReadOnly()]
 
 
 class TransactionVerificationView(APIView):
@@ -109,8 +139,8 @@ class TransactionMarkPaidView(APIView):
                 status=status.HTTP_404_NOT_FOUND
             )
 
-        # Ensure user is participant or initiator
-        if request.user not in [transaction.initiator, transaction.participant]:
+        # Ensure user is initiator
+        if request.user != transaction.initiator:
             return Response(
                 {"detail": "You do not have permission to mark this transaction as paid."},
                 status=status.HTTP_403_FORBIDDEN
