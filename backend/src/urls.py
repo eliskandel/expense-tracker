@@ -27,6 +27,7 @@ urlpatterns = [
                         path("lend/", include("src.apps.lend.urls")),
                         path("notification/", include("src.apps.notification.urls")),
                         path("chatbot/", include("src.apps.chatbot.urls")),
+                        path("event/", include("src.apps.event.urls")),
 ]
 
 urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

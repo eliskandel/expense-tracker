@@ -1,13 +1,17 @@
 from celery import shared_task
 from django.core.mail import EmailMessage
 from django.conf import settings
-from src.apps.notification.models import Notification
-from src.apps.remainder.models import Reminder
 from django.utils import timezone
+from django.contrib.auth import get_user_model
+
+from src.apps.notification.models import Notification
+from .models import Reminder
 
 @shared_task
 def send_user_mail(subject, recipients, message, create_notification=True):
-
+    """
+    Celery task to send an email and create an in-app notification.
+    """
     # 1️⃣ Send email
     mail = EmailMessage(
         subject=subject,
@@ -19,7 +23,6 @@ def send_user_mail(subject, recipients, message, create_notification=True):
 
     # 2️⃣ Create in-app notification
     if create_notification:
-        from django.contrib.auth import get_user_model
         User = get_user_model()
         for email in recipients:
             try:
@@ -27,6 +30,7 @@ def send_user_mail(subject, recipients, message, create_notification=True):
                 Notification.objects.create(recipient=user, message=message)
             except User.DoesNotExist:
                 pass  # skip if no user with that email
+
 
 @shared_task
 def send_reminder_notification(reminder_id):

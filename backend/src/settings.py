@@ -57,6 +57,7 @@ INSTALLED_APPS = [
     "src.apps.notification",
     "src.apps.chatbot",
     "src.apps.event",
+    "src.apps.remainder",
 
 ]
 GOOGLE_GEMINI_API_KEY = "AIzaSyAz8tsel5AzsH7nj2sGTJLpwEnGKtZ6b6Q"

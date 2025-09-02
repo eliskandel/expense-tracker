@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Event, EventTransaction, EventExpense
+from .models import Event, EventExpense
 
 class EventSerializer(serializers.ModelSerializer):
 	"""
@@ -14,14 +14,6 @@ class EventSerializer(serializers.ModelSerializer):
 		fields = '__all__'
 
 
-class EventTransactionSerializer(serializers.ModelSerializer):
-	"""
-	Serializer for the EventTransaction model.
-	"""
-	class Meta:
-		model = EventTransaction
-		fields = '__all__'
-
 
 class EventExpenseSerializer(serializers.ModelSerializer):
 	"""
@@ -29,7 +21,7 @@ class EventExpenseSerializer(serializers.ModelSerializer):
 	The 'paid_by' field is read-only because the view will automatically set it to the authenticated user.
 	"""
 	paid_by = serializers.ReadOnlyField(source='paid_by.username')
-
 	class Meta:
 		model = EventExpense
 		fields = '__all__'
+	
