@@ -187,13 +187,20 @@ class SettlementCreate(generics.CreateAPIView):
             expense_share.is_settled = True
             expense_share.save()
 
+        # ✅ Check if all shares of this expense are settled
+        expense = expense_share.expense
+        all_settled = not expense.shares.filter(is_settled=False).exists()
+        if all_settled:
+            expense.is_settled = True   # make sure you have this field in Expense model
+            expense.save()
+
+        # Create settlement record
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save(settled_by=self.request.user)
 
         headers = self.get_success_headers(serializer.data)
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
-
 
 # -------------------------------
 # Reporting Views
