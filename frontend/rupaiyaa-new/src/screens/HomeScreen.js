@@ -1,7 +1,7 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useIsFocused, useNavigation } from '@react-navigation/native';
-import { fetchLendLogs, verifyLend } from '../api/lendApi';
+import { fetchLendLogs } from '../api/lendApi';
 import AddLendModal from '../components/AddLendModal';
 // import { LinearGradient } from 'expo-linear-gradient';
 import { useContext, useEffect, useState } from 'react';
@@ -36,6 +36,8 @@ const HomeScreen = () => {
     const [lendLogs, setLendLogs] = useState([]);
     const [lendLoading, setLendLoading] = useState(false);
     const [verifyingId, setVerifyingId] = useState(null);
+    // Warning message state
+    const [warningMessage, setWarningMessage] = useState('');
     // Chatbot modal state
     const [chatbotVisible, setChatbotVisible] = useState(false);
     const [chatbotLoading, setChatbotLoading] = useState(false);
@@ -90,20 +92,26 @@ const HomeScreen = () => {
         try {
             const data = await fetchLendLogs();
             const logs = data.results || data;
-            // Only show logs where:
-            // - If transaction_type is 'L' (Lend), user is the initiator
-            // - If transaction_type is 'B' (Borrow), user is the participant
-            const filteredLogs = logs.filter(log => {
-                if (log.transaction_type === 'L') {
-                    return log.initiator && String(log.initiator.id) === String(userId);
-                } else if (log.transaction_type === 'B') {
-                    return log.participant && String(log.participant.id) === String(userId);
-                }
-                return false;
-            });
-            setLendLogs(filteredLogs);
+            console.log('All lend logs:', logs);
+            setLendLogs(logs);
         } catch (e) {
             setLendLogs([]);
+            let errorMsg = '';
+            if (e && e.message) {
+                errorMsg = e.message;
+            } else if (typeof e === 'string') {
+                errorMsg = e;
+            }
+            if (errorMsg && (errorMsg.includes('403') || errorMsg.toLowerCase().includes('forbidden'))) {
+                setWarningMessage('Warning: You do not have access to view lend logs.');
+                console.warn('Warning: Permission denied (403 Forbidden):', errorMsg);
+            } else if (errorMsg) {
+                setWarningMessage('Warning: ' + errorMsg);
+                console.warn('Lend log warning:', errorMsg);
+            } else {
+                setWarningMessage('Warning: Failed to fetch lend logs.');
+                console.log('Lend log fetch error:', errorMsg || e);
+            }
         } finally {
             setLendLoading(false);
         }
@@ -299,6 +307,15 @@ const HomeScreen = () => {
 
     return (
         <View className={`flex-1 ${isDarkMode ? 'bg-gray-800' : 'bg-gray-100'}`}> 
+            {/* Warning message box */}
+            {warningMessage ? (
+                <View style={{ backgroundColor: '#F59E42', padding: 12, margin: 12, borderRadius: 8, alignItems: 'center' }}>
+                    <Text style={{ color: '#fff', fontWeight: 'bold' }}>{warningMessage}</Text>
+                    <TouchableOpacity onPress={() => setWarningMessage('')} style={{ position: 'absolute', right: 16, top: 8 }}>
+                        <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 18 }}>×</Text>
+                    </TouchableOpacity>
+                </View>
+            ) : null}
             <CustomHeader
                 title="Good Morning!"
                 subtitle={`Welcome back, ${userName || 'User'}`}
@@ -499,39 +516,97 @@ const HomeScreen = () => {
                             <Text className={`text-center ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>No lend logs yet.</Text>
                         ) : (
                             lendLogs.map((log) => {
-                                // Show the other user's name
-                                let otherUser = null;
-                                if (log.transaction_type === 'L') {
-                                    otherUser = log.participant;
-                                } else if (log.transaction_type === 'B') {
-                                    otherUser = log.initiator;
-                                }
-                                const otherUserName = otherUser ? (otherUser.first_name || '') + ' ' + (otherUser.last_name || '') || otherUser.username || 'User' : 'User';
+                                // Show initiator_username and participant_username if available
+                                const initiatorUsername = log.initiator_username || (log.initiator && (log.initiator.username || log.initiator.email || log.initiator.name)) || 'Unknown';
+                                const participantUsername = log.participant_username || (log.participant && (log.participant.username || log.participant.email || log.participant.name)) || 'Unknown';
                                 return (
                                     <View key={log.id} style={{ borderWidth: 1, borderColor: '#eee', borderRadius: 10, padding: 12, marginBottom: 10, backgroundColor: isDarkMode ? '#27272A' : '#F9FAFB' }}>
-                                        <Text style={{ fontWeight: 'bold', color: isDarkMode ? '#fff' : '#222' }}>{otherUserName.trim()}</Text>
+                                        <Text style={{ fontWeight: 'bold', color: isDarkMode ? '#fff' : '#222' }}>Initiator: {initiatorUsername}</Text>
+                                        <Text style={{ fontWeight: 'bold', color: isDarkMode ? '#fff' : '#222' }}>Participant: {participantUsername}</Text>
                                         <Text style={{ color: '#7C3AED', fontWeight: 'bold' }}>Amount: {log.amount}</Text>
                                         <Text>Type: {log.transaction_type === 'L' ? 'Lend' : 'Borrow'}</Text>
-                                        <Text>Status: {log.status ? 'Pending' : 'Lend'}</Text>
+                                        <Text>Status: {log.is_verified ? 'Verified' : 'Not Verified'}</Text>
+                                        <Text>Paid: {log.status === 'D' ? 'Yes' : 'No'}</Text>
                                         <Text>Due: {log.due_date}</Text>
                                         <Text>Description: {log.description}</Text>
-                                        <TouchableOpacity
-                                            style={{ marginTop: 8, backgroundColor: '#7C3AED', borderRadius: 8, paddingVertical: 6, paddingHorizontal: 14, alignSelf: 'flex-end', opacity: verifyingId === log.id ? 0.5 : 1 }}
-                                            disabled={verifyingId === log.id || log.status}
-                                            onPress={async () => {
-                                                setVerifyingId(log.id);
-                                                try {
-                                                    await verifyLend(log.id);
-                                                    loadLendLogs();
-                                                } catch (e) {
-                                                    alert('Failed to verify lend');
-                                                } finally {
-                                                    setVerifyingId(null);
-                                                }
-                                            }}
-                                        >
-                                            <Text style={{ color: 'white', fontWeight: 'bold' }}>{log.status ? 'Pending' : verifyingId === log.id ? 'Verifying...' : 'Mark as Pending'}</Text>
-                                        </TouchableOpacity>
+                                        {/* Verify button if not verified */}
+                                        {!log.is_verified && (
+                                            <TouchableOpacity
+                                                style={{ marginTop: 8, backgroundColor: '#10B981', borderRadius: 8, paddingVertical: 6, paddingHorizontal: 14, alignSelf: 'flex-end', opacity: verifyingId === log.id ? 0.5 : 1 }}
+                                                disabled={verifyingId === log.id}
+                                                onPress={async () => {
+                                                    setVerifyingId(log.id);
+                                                    try {
+                                                        const accessToken = await AsyncStorage.getItem('access_token');
+                                                        await fetch(`${API_BASE_URL}/lend/${log.id}/verify/`, {
+                                                            method: 'PATCH',
+                                                            headers: {
+                                                                'Authorization': `Bearer ${accessToken}`,
+                                                                'Content-Type': 'application/json',
+                                                            },
+                                                        });
+                                                        loadLendLogs();
+                                                    } catch (e) {
+                                                        alert('Failed to verify lend');
+                                                    } finally {
+                                                        setVerifyingId(null);
+                                                    }
+                                                }}
+                                            >
+                                                <Text style={{ color: 'white', fontWeight: 'bold' }}>{verifyingId === log.id ? 'Verifying...' : 'Verify'}</Text>
+                                            </TouchableOpacity>
+                                        )}
+                                        {/* Paid button: show as red and disabled if status is 'D' (Done/Paid), else show button if status is 'A' (Approved) */}
+                                        {log.status === 'D' ? (
+                                            <View
+                                                style={{
+                                                    marginTop: 8,
+                                                    backgroundColor: '#EF4444',
+                                                    borderRadius: 8,
+                                                    paddingVertical: 6,
+                                                    paddingHorizontal: 14,
+                                                    alignSelf: 'flex-end',
+                                                    opacity: 1
+                                                }}
+                                            >
+                                                <Text style={{ color: 'white', fontWeight: 'bold' }}>Paid</Text>
+                                            </View>
+                                        ) : log.status === 'A' ? (
+                                            <TouchableOpacity
+                                                style={{
+                                                    marginTop: 8,
+                                                    backgroundColor: '#F59E42',
+                                                    borderRadius: 8,
+                                                    paddingVertical: 6,
+                                                    paddingHorizontal: 14,
+                                                    alignSelf: 'flex-end',
+                                                    opacity: verifyingId === log.id ? 0.5 : 1
+                                                }}
+                                                disabled={verifyingId === log.id}
+                                                onPress={async () => {
+                                                    setVerifyingId(log.id);
+                                                    try {
+                                                        const accessToken = await AsyncStorage.getItem('access_token');
+                                                        await fetch(`${API_BASE_URL}/lend/${log.id}/paid/`, {
+                                                            method: 'PATCH',
+                                                            headers: {
+                                                                'Authorization': `Bearer ${accessToken}`,
+                                                                'Content-Type': 'application/json',
+                                                            },
+                                                        });
+                                                        loadLendLogs();
+                                                    } catch (e) {
+                                                        alert('Failed to mark as paid');
+                                                    } finally {
+                                                        setVerifyingId(null);
+                                                    }
+                                                }}
+                                            >
+                                                <Text style={{ color: 'white', fontWeight: 'bold' }}>
+                                                    {verifyingId === log.id ? 'Marking...' : 'Mark as Paid'}
+                                                </Text>
+                                            </TouchableOpacity>
+                                        ) : null}
                                     </View>
                                 );
                             })

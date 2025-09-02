@@ -8,7 +8,7 @@ const AddLendModal = ({ visible, onClose, onSuccess }) => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [participant, setParticipant] = useState('');
-  const [transactionType, setTransactionType] = useState('L'); // 'L' for Lend, 'B' for Borrow
+  // Removed transactionType as it's not needed in the payload
   const [amount, setAmount] = useState('');
   const [interestRate, setInterestRate] = useState('');
   const [dueDate, setDueDate] = useState('');
@@ -52,12 +52,10 @@ const AddLendModal = ({ visible, onClose, onSuccess }) => {
       const accessToken = await AsyncStorage.getItem('access_token');
       const payload = {
         participant,
-        transaction_type: transactionType,
         amount,
         interest_rate: interestRate,
         due_date: dueDate,
         description,
-        status: false,
       };
       const response = await fetch(`${API_BASE_URL}/lend/`, {
         method: 'POST',
@@ -85,18 +83,9 @@ const AddLendModal = ({ visible, onClose, onSuccess }) => {
     <Modal visible={visible} animationType="slide" transparent>
       <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.3)', justifyContent: 'center', alignItems: 'center' }}>
         <View style={{ backgroundColor: 'white', borderRadius: 16, padding: 24, width: '90%' }}>
-          <Text style={{ fontWeight: 'bold', fontSize: 18, marginBottom: 12 }}>Add Lend / Borrow</Text>
+          <Text style={{ fontWeight: 'bold', fontSize: 18, marginBottom: 12 }}>Add Lend</Text>
           {error ? <Text style={{ color: 'red', marginBottom: 8 }}>{error}</Text> : null}
           {loading ? <ActivityIndicator /> : <>
-            <Text style={{ marginBottom: 4 }}>Transaction Type</Text>
-            <Picker
-              selectedValue={transactionType}
-              onValueChange={setTransactionType}
-              style={{ marginBottom: 12 }}
-            >
-              <Picker.Item label="Lend" value="L" />
-              <Picker.Item label="Borrow" value="B" />
-            </Picker>
             <Text style={{ marginBottom: 4 }}>Select User</Text>
             <Picker
               selectedValue={participant}
