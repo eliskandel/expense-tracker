@@ -1,8 +1,9 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useContext } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { Image, Platform, SafeAreaView, Text, TouchableOpacity, View } from 'react-native';
+import { fetchUnreadCount } from '../api/notificationApi';
 import { AuthContext } from '../context/AuthContext';
 import { ThemeContext } from '../context/ThemeContext';
 
@@ -21,6 +22,58 @@ const CustomHeader = ({
     const { userName, profileImage } = useContext(AuthContext);
     const displayName = userName || 'User';
     const userInitial = displayName.charAt(0).toUpperCase();
+
+    const [unreadCount, setUnreadCount] = useState(0);
+    const [notifLoading, setNotifLoading] = useState(false);
+
+    useEffect(() => {
+        let mounted = true;
+        const loadUnreadCount = async () => {
+            setNotifLoading(true);
+            try {
+                const data = await fetchUnreadCount();
+                if (mounted) setUnreadCount(data.count || 0);
+            } catch {
+                if (mounted) setUnreadCount(0);
+            } finally {
+                if (mounted) setNotifLoading(false);
+            }
+        };
+        loadUnreadCount();
+        // Listen for notificationRead event to update unread count
+        const handleNotificationRead = async (e) => {
+            await loadUnreadCount();
+        };
+        if (typeof window !== 'undefined' && window.addEventListener) {
+            window.addEventListener('notificationRead', handleNotificationRead);
+        }
+        return () => {
+            mounted = false;
+            if (typeof window !== 'undefined' && window.removeEventListener) {
+                window.removeEventListener('notificationRead', handleNotificationRead);
+            }
+        };
+    }, []);
+
+    // Always refresh notifications when screen comes into focus
+    useFocusEffect(
+        React.useCallback(() => {
+            let isActive = true;
+            const refresh = async () => {
+                setNotifLoading(true);
+                try {
+                    const data = await fetchUnreadCount();
+                    if (isActive) setUnreadCount(data.count || 0);
+                } catch {
+                    if (isActive) setUnreadCount(0);
+                } finally {
+                    if (isActive) setNotifLoading(false);
+                }
+            };
+            refresh();
+            return () => { isActive = false; };
+        }, [])
+    );
 
     const gradientColors = isDarkMode ? ['#4B0082', '#6A0DAD'] : ['#8A2BE2', '#640fa1ff'];
     const headerContainerClass = isSmall ? 'pb-4' : 'pb-6';
@@ -58,6 +111,11 @@ const CustomHeader = ({
                             className="w-10 h-10 rounded-full bg-white bg-opacity-30 justify-center items-center mr-2"
                         >
                             <MaterialCommunityIcons name="bell-outline" size={24} color="white" />
+                            {notifLoading ? null : unreadCount > 0 && (
+                                <View style={{ position: 'absolute', top: 4, right: 4, backgroundColor: '#EF4444', borderRadius: 8, minWidth: 16, height: 16, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 3 }}>
+                                    <Text style={{ color: 'white', fontSize: 10, fontWeight: 'bold' }}>{unreadCount}</Text>
+                                </View>
+                            )}
                         </TouchableOpacity>
                         {showProfileIcon && (
                             <TouchableOpacity

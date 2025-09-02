@@ -1,17 +1,17 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useContext, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
-  Modal,
-  ScrollView,
+  Modal, Platform, ScrollView,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
-  View,
+  View
 } from 'react-native';
 import Header from '../components/Header';
 import { AuthContext } from '../context/AuthContext';
@@ -33,6 +33,8 @@ const GroupExpenseScreen = () => {
 
   // State for add expense form
   const [expenseDescription, setExpenseDescription] = useState('');
+  const [expenseDate, setExpenseDate] = useState(new Date());
+  const [showDatePicker, setShowDatePicker] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [totalAmount, setTotalAmount] = useState('');
   const [splitType, setSplitType] = useState('equal'); // 'equal' or 'unequal'
@@ -166,6 +168,9 @@ const GroupExpenseScreen = () => {
       const accessToken = await getAccessToken();
       if (!accessToken) throw new Error('No access token');
 
+      // Format date as YYYY-MM-DD
+      const formattedDate = expenseDate.toISOString().split('T')[0];
+
       const expenseData = {
         description: expenseDescription,
         category_id: selectedCategory,
@@ -176,6 +181,7 @@ const GroupExpenseScreen = () => {
         paid_by: expensePaidBy,
         is_settled: isSettled,
         group_id: group.id,
+        date: formattedDate,
         ...(finalSplitType !== 'equal' && { items: expenseItems })
       };
 
@@ -434,6 +440,58 @@ const GroupExpenseScreen = () => {
                 {isSettled ? 'Settled' : 'Not Settled'}
               </Text>
             </View>
+          </View>
+
+          {/* Date Picker Button (cross-platform) */}
+          <View style={styles.formGroup}>
+            <Text style={[styles.formLabel, { color: isDarkMode ? '#9CA3AF' : '#4B5563' }]}>Date</Text>
+            {Platform.OS === 'web' ? (
+              <input
+                type="date"
+                value={expenseDate.toISOString().split('T')[0]}
+                max={new Date().toISOString().split('T')[0]}
+                onChange={e => setExpenseDate(new Date(e.target.value))}
+                style={{
+                  padding: 12,
+                  borderRadius: 8,
+                  backgroundColor: isDarkMode ? '#374151' : '#F3F4F6',
+                  borderWidth: 1,
+                  borderColor: isDarkMode ? '#4B5563' : '#D1D5DB',
+                  marginBottom: 8,
+                  color: isDarkMode ? '#FFFFFF' : '#111827',
+                }}
+              />
+            ) : (
+              <>
+                <TouchableOpacity
+                  style={{
+                    padding: 12,
+                    borderRadius: 8,
+                    backgroundColor: isDarkMode ? '#374151' : '#F3F4F6',
+                    borderWidth: 1,
+                    borderColor: isDarkMode ? '#4B5563' : '#D1D5DB',
+                    marginBottom: 8,
+                  }}
+                  onPress={() => setShowDatePicker(true)}
+                >
+                  <Text style={{ color: isDarkMode ? '#FFFFFF' : '#111827' }}>
+                    {expenseDate.toLocaleDateString()}
+                  </Text>
+                </TouchableOpacity>
+                {showDatePicker && (
+                  <DateTimePicker
+                    value={expenseDate}
+                    mode="date"
+                    display="default"
+                    onChange={(event, selectedDate) => {
+                      setShowDatePicker(false);
+                      if (selectedDate) setExpenseDate(selectedDate);
+                    }}
+                    maximumDate={new Date()}
+                  />
+                )}
+              </>
+            )}
           </View>
 
           {/* Description Input */}

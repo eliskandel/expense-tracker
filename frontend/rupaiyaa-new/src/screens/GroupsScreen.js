@@ -13,8 +13,8 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import CustomHeader from '../components/CustomHeader';
 import GroupList from '../components/GroupList';
-import Header from '../components/Header';
 import { AuthContext } from '../context/AuthContext';
 import { ThemeContext } from '../context/ThemeContext';
 
@@ -52,6 +52,8 @@ const GroupsScreen = () => {
   const [individualAmounts, setIndividualAmounts] = useState({});
   const [isAddingSharedExpense, setIsAddingSharedExpense] = useState(false);
   const [items, setItems] = useState([{ item_name: '', amount: '', owes: {} }]);
+  // New: Date for expense
+  const [expenseDate, setExpenseDate] = useState('');
 
   // New state for Categories
   const [categories, setCategories] = useState([]);
@@ -262,6 +264,7 @@ const GroupsScreen = () => {
       split_type: splitType,
       category_id: selectedCategory,
       shares: [],
+      date: expenseDate, // Add the date from the input
     };
 
     if (splitType === 'equal') {
@@ -542,6 +545,7 @@ const GroupsScreen = () => {
         )}
       </View>
 
+
       {/* Total Amount Input */}
       <View style={styles.formGroup}>
         <Text style={[styles.formLabel, { color: isDarkMode ? '#9CA3AF' : '#4B5563' }]}>Total Amount</Text>
@@ -552,6 +556,18 @@ const GroupsScreen = () => {
           keyboardType="numeric"
           value={totalAmount}
           onChangeText={setTotalAmount}
+        />
+      </View>
+
+      {/* Date Input */}
+      <View style={styles.formGroup}>
+        <Text style={[styles.formLabel, { color: isDarkMode ? '#9CA3AF' : '#4B5563' }]}>Date</Text>
+        <TextInput
+          style={[styles.input, { backgroundColor: isDarkMode ? '#374151' : '#F3F4F6', color: isDarkMode ? '#FFFFFF' : '#111827' }]}
+          placeholder="YYYY-MM-DD"
+          placeholderTextColor={isDarkMode ? '#6B7280' : '#9CA3AF'}
+          value={expenseDate}
+          onChangeText={setExpenseDate}
         />
       </View>
 
@@ -571,7 +587,7 @@ const GroupsScreen = () => {
 
   return (
     <View style={[styles.container, { backgroundColor: isDarkMode ? '#1F2937' : '#F3F4F6' }]}>
-      <Header title="Groups" showBackButton={false} showProfileIcon={true} />
+  <CustomHeader title="Groups" showBackButton={false} showProfileIcon={true} />
 
       <View style={styles.mainContent}>
         <GroupList

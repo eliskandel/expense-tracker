@@ -14,6 +14,7 @@ import HistoryScreen from './src/screens/HistoryScreen';
 import HomeScreen from './src/screens/HomeScreen';
 import LearnScreen from './src/screens/LearnScreen';
 import LoginScreen from './src/screens/LoginScreen';
+import NotificationsScreen from './src/screens/NotificationsScreen';
 import ProfileScreen from './src/screens/ProfileScreen';
 
 import './global.css';
@@ -122,6 +123,7 @@ function AppNavigation() {
                         <Stack.Screen name="Profile" component={ProfileScreen} />
                         <Stack.Screen name="SetBudgetGoal" component={SetBudgetGoal} />
                         <Stack.Screen name="GroupExpense" component={GroupExpenseScreen} />
+                        <Stack.Screen name="Notifications" component={NotificationsScreen} />
                     </>
                 ) : (
                     <Stack.Screen name="Auth" component={LoginScreen} />

@@ -15,7 +15,7 @@ const screenWidth = Dimensions.get('window').width;
 
 const HomeScreen = () => {
     const { colors, isDarkMode } = useContext(ThemeContext);
-    const { userName } = useContext(AuthContext);
+    const { userName, id: userId } = useContext(AuthContext);
     const isFocused = useIsFocused();
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -35,12 +35,24 @@ const HomeScreen = () => {
     const [lendLogs, setLendLogs] = useState([]);
     const [lendLoading, setLendLoading] = useState(false);
     const [verifyingId, setVerifyingId] = useState(null);
-    // Fetch lend logs
+    // Fetch lend logs and filter for current user (initiator/participant)
     const loadLendLogs = async () => {
         setLendLoading(true);
         try {
             const data = await fetchLendLogs();
-            setLendLogs(data.results || data);
+            const logs = data.results || data;
+            // Only show logs where:
+            // - If transaction_type is 'L' (Lend), user is the initiator
+            // - If transaction_type is 'B' (Borrow), user is the participant
+            const filteredLogs = logs.filter(log => {
+                if (log.transaction_type === 'L') {
+                    return log.initiator && String(log.initiator.id) === String(userId);
+                } else if (log.transaction_type === 'B') {
+                    return log.participant && String(log.participant.id) === String(userId);
+                }
+                return false;
+            });
+            setLendLogs(filteredLogs);
         } catch (e) {
             setLendLogs([]);
         } finally {
@@ -390,33 +402,43 @@ const HomeScreen = () => {
                         ) : lendLogs.length === 0 ? (
                             <Text className={`text-center ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>No lend logs yet.</Text>
                         ) : (
-                            lendLogs.map((log) => (
-                                <View key={log.id} style={{ borderWidth: 1, borderColor: '#eee', borderRadius: 10, padding: 12, marginBottom: 10, backgroundColor: isDarkMode ? '#27272A' : '#F9FAFB' }}>
-                                    <Text style={{ fontWeight: 'bold', color: isDarkMode ? '#fff' : '#222' }}>{log.participant_name || log.participant || 'User'}</Text>
-                                    <Text style={{ color: '#7C3AED', fontWeight: 'bold' }}>Amount: {log.amount}</Text>
-                                    <Text>Type: {log.transaction_type === 'L' ? 'Lend' : 'Borrow'}</Text>
-                                    <Text>Status: {log.status ? 'Pending' : 'Lend'}</Text>
-                                    <Text>Due: {log.due_date}</Text>
-                                    <Text>Description: {log.description}</Text>
-                                    <TouchableOpacity
-                                        style={{ marginTop: 8, backgroundColor: '#7C3AED', borderRadius: 8, paddingVertical: 6, paddingHorizontal: 14, alignSelf: 'flex-end', opacity: verifyingId === log.id ? 0.5 : 1 }}
-                                        disabled={verifyingId === log.id || log.status}
-                                        onPress={async () => {
-                                            setVerifyingId(log.id);
-                                            try {
-                                                await verifyLend(log.id);
-                                                loadLendLogs();
-                                            } catch (e) {
-                                                alert('Failed to verify lend');
-                                            } finally {
-                                                setVerifyingId(null);
-                                            }
-                                        }}
-                                    >
-                                        <Text style={{ color: 'white', fontWeight: 'bold' }}>{log.status ? 'Pending' : verifyingId === log.id ? 'Verifying...' : 'Mark as Pending'}</Text>
-                                    </TouchableOpacity>
-                                </View>
-                            ))
+                            lendLogs.map((log) => {
+                                // Show the other user's name
+                                let otherUser = null;
+                                if (log.transaction_type === 'L') {
+                                    otherUser = log.participant;
+                                } else if (log.transaction_type === 'B') {
+                                    otherUser = log.initiator;
+                                }
+                                const otherUserName = otherUser ? (otherUser.first_name || '') + ' ' + (otherUser.last_name || '') || otherUser.username || 'User' : 'User';
+                                return (
+                                    <View key={log.id} style={{ borderWidth: 1, borderColor: '#eee', borderRadius: 10, padding: 12, marginBottom: 10, backgroundColor: isDarkMode ? '#27272A' : '#F9FAFB' }}>
+                                        <Text style={{ fontWeight: 'bold', color: isDarkMode ? '#fff' : '#222' }}>{otherUserName.trim()}</Text>
+                                        <Text style={{ color: '#7C3AED', fontWeight: 'bold' }}>Amount: {log.amount}</Text>
+                                        <Text>Type: {log.transaction_type === 'L' ? 'Lend' : 'Borrow'}</Text>
+                                        <Text>Status: {log.status ? 'Pending' : 'Lend'}</Text>
+                                        <Text>Due: {log.due_date}</Text>
+                                        <Text>Description: {log.description}</Text>
+                                        <TouchableOpacity
+                                            style={{ marginTop: 8, backgroundColor: '#7C3AED', borderRadius: 8, paddingVertical: 6, paddingHorizontal: 14, alignSelf: 'flex-end', opacity: verifyingId === log.id ? 0.5 : 1 }}
+                                            disabled={verifyingId === log.id || log.status}
+                                            onPress={async () => {
+                                                setVerifyingId(log.id);
+                                                try {
+                                                    await verifyLend(log.id);
+                                                    loadLendLogs();
+                                                } catch (e) {
+                                                    alert('Failed to verify lend');
+                                                } finally {
+                                                    setVerifyingId(null);
+                                                }
+                                            }}
+                                        >
+                                            <Text style={{ color: 'white', fontWeight: 'bold' }}>{log.status ? 'Pending' : verifyingId === log.id ? 'Verifying...' : 'Mark as Pending'}</Text>
+                                        </TouchableOpacity>
+                                    </View>
+                                );
+                            })
                         )}
                         <AddLendModal
                             visible={lendModalVisible}
