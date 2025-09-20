@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const API_BASE_URL = 'http://10.40.20.94:8000';
+const API_BASE_URL = 'http://127.0.0.1:8000';
 
 export const fetchLendLogs = async () => {
   const accessToken = await AsyncStorage.getItem('access_token');

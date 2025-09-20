@@ -18,7 +18,7 @@ import GroupList from '../components/GroupList';
 import { AuthContext } from '../context/AuthContext';
 import { ThemeContext } from '../context/ThemeContext';
 
-const API_BASE_URL = 'http://10.40.20.94:8000';
+const API_BASE_URL = 'http://127.0.0.1:8000';
 
 const GroupsScreen = () => {
   const { isLoggedIn, id } = useContext(AuthContext);

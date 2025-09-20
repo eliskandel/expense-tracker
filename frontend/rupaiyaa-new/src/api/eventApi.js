@@ -1,4 +1,4 @@
-const API_BASE_URL = process.env.API_BASE_URL || 'http://10.40.20.94:8000';
+const API_BASE_URL = process.env.API_BASE_URL || 'http://127.0.0.1:8000';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export const fetchEvents = async () => {

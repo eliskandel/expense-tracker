@@ -7,7 +7,7 @@ import { ActivityIndicator, Alert, Platform, ScrollView, Text, TextInput, Toucha
 import CustomHeader from '../components/CustomHeader';
 import { AuthContext } from '../context/AuthContext';
 import { ThemeContext } from '../context/ThemeContext';
-const API_BASE_URL = 'http://10.40.20.94:8000/';
+const API_BASE_URL = 'http://127.0.0.1:8000/';
 const paymentMethods = [
     { name: 'Credit Card', icon: 'credit-card-outline' },
     { name: 'Debit Card', icon: 'credit-card-chip-outline' },

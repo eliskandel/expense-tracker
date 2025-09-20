@@ -5,7 +5,7 @@ import { ActivityIndicator, FlatList, ScrollView, Text, TextInput, TouchableOpac
 import CustomHeader from '../components/CustomHeader';
 import FilterModal from '../components/FilterModal';
 import { ThemeContext } from '../context/ThemeContext';
-const API_BASE_URL = 'http://10.40.20.94:8000';
+const API_BASE_URL = 'http://127.0.0.1:8000';
 const HistoryScreen = () => {
     const { colors, isDarkMode } = useContext(ThemeContext);
     const [isLoading, setIsLoading] = useState(true);

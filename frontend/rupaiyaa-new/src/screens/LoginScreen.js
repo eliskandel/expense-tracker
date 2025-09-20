@@ -6,7 +6,7 @@ import { useContext, useState } from 'react';
 import { ActivityIndicator, Alert, Image, ScrollView, Text, TextInput, TouchableOpacity, View, } from 'react-native';
 import { AuthContext } from '../context/AuthContext';
 
-const API_BASE_URL = 'http://10.40.20.94:8000'; // Your current API Base URL
+const API_BASE_URL = 'http://127.0.0.1:8000'; // Your current API Base URL
 
 const LoginScreen = () => {
   const navigation = useNavigation();

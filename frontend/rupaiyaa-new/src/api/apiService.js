@@ -2,7 +2,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // !!! IMPORTANT: Ensure this matches your Django backend URL !!!
-const API_BASE_URL = 'http://10.40.20.94:8000';
+const API_BASE_URL = 'http://127.0.0.1:8000';
 
 // Helper function for making authenticated fetch requests
 const authenticatedFetch = async (url, options = {}) => {

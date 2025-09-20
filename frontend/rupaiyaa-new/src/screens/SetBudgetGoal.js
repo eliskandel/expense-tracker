@@ -8,7 +8,7 @@ const getCurrentMonth = () => {
   const now = new Date();
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
 };
-const API_BASE_URL = 'http://10.40.20.94:8000';
+const API_BASE_URL = 'http://127.0.0.1:8000';
 const SetBudgetGoal = () => {
   const [month, setMonth] = useState(getCurrentMonth());
   const [categoryId, setCategoryId] = useState(0); // 0 = All

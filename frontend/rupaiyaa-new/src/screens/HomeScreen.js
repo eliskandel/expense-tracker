@@ -12,7 +12,7 @@ import ChatbotModal from '../components/ChatbotModal';
 import CustomHeader from '../components/CustomHeader';
 import { AuthContext } from '../context/AuthContext';
 import { ThemeContext } from '../context/ThemeContext';
-const API_BASE_URL = 'http://10.40.20.94:8000';
+const API_BASE_URL = 'http://127.0.0.1:8000';
 const screenWidth = Dimensions.get('window').width;
 
 const HomeScreen = () => {

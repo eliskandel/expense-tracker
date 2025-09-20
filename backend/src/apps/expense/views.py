@@ -80,33 +80,24 @@ class ExpenseListCreateView(generics.ListCreateAPIView):
                     amount_owed=share['amount_owed']
                 )
 
+        
         elif expense.split_type == 'itemized':
             if not shares_data:
                 raise serializers.ValidationError({"shares": "Shares data is required for itemized split."})
 
+            # Check if total shared amount equals the expense amount
             total_shared = sum(Decimal(share['amount_owed']) for share in shares_data)
             if total_shared != expense.amount:
                 raise serializers.ValidationError({"shares": "Total of itemized shares must equal the expense amount."})
 
-            for share in shares_data:
-                user_id = share['user']
-                item_name = share.get('item_name', '')
-
-                # Check for existing share with the same combination
-                if ExpenseShare.objects.filter(expense=expense, user_id=user_id, item_name=item_name).exists():
-                     raise serializers.ValidationError(
-                         {"shares": f"Duplicate item '{item_name}' for user '{user_id}' already exists for this expense."}
-                     )
-
-                ExpenseShare.objects.create(
-                    expense=expense,
-                    user_id=user_id,
-                    amount_owed=share['amount_owed'],
-                    item_name=item_name
-                )
-
-
-# Rest of the code remains the same...
+            # Process only the first share data in the list
+            first_share = shares_data[0]
+            ExpenseShare.objects.create(
+                expense=expense,
+                user_id=first_share['user'],
+                amount_owed=first_share['amount_owed'],
+                item_name=first_share.get('item_name', '')
+            )
 
 class ExpenseRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Expense.objects.all()

@@ -27,7 +27,7 @@ const EventScreen = () => {
       await Promise.all(
         (eventList || []).map(async (ev) => {
           try {
-            const res = await fetch(`${process.env.API_BASE_URL || 'http://10.40.20.94:8000'}/event/expenses/summary/?event_id=${ev.id}`, {
+            const res = await fetch(`${process.env.API_BASE_URL || 'http://127.0.0.1:8000'}/event/expenses/summary/?event_id=${ev.id}`, {
               headers: { 'Authorization': `Bearer ${accessToken}` }
             });
             if (res.ok) {
