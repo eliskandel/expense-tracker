@@ -6,7 +6,7 @@ import { useContext, useState } from 'react';
 import { ActivityIndicator, Alert, Image, ScrollView, Text, TextInput, TouchableOpacity, View, } from 'react-native';
 import { AuthContext } from '../src/context/AuthContext';
 
-const API_BASE_URL = 'http://127.0.0.1:8000'; // Your current API Base URL
+const API_BASE_URL = process.env.API_BASE_URL; // Your current API Base URL
 
 const LoginScreen = () => {
   const navigation = useNavigation();
@@ -53,7 +53,7 @@ const LoginScreen = () => {
     setLoading(true);
 
     try {
-      const response = await fetch(`${API_BASE_URL}/auth/login/`, {
+      const response = await fetch(`${process.env.API_BASE_URL}/auth/login/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -137,7 +137,7 @@ const LoginScreen = () => {
         formData.append('profile_image', { uri: signupProfileImage, name: filename, type });
       }
 
-      const response = await fetch(`${API_BASE_URL}/auth/register/`, {
+      const response = await fetch(`${process.env.API_BASE_URL}/auth/register/`, {
         method: 'POST',
         body: formData, // fetch will automatically set 'Content-Type': 'multipart/form-data'
       });

@@ -8,7 +8,7 @@ const getCurrentMonth = () => {
   const now = new Date();
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
 };
-const API_BASE_URL = 'http://127.0.0.1:8000';
+const API_BASE_URL = process.env.API_BASE_URL;
 const SetBudgetGoal = () => {
   const [month, setMonth] = useState(getCurrentMonth());
   const [categoryId, setCategoryId] = useState(0); // 0 = All
@@ -22,7 +22,7 @@ const SetBudgetGoal = () => {
     const fetchCategories = async () => {
       try {
         const accessToken = await AsyncStorage.getItem('access_token');
-        const response = await fetch(`${API_BASE_URL}/expense/categories/`, {
+        const response = await fetch(`${process.env.API_BASE_URL}/expense/categories/`, {
           headers: {
             'Authorization': `Bearer ${accessToken}`,
             'Content-Type': 'application/json',

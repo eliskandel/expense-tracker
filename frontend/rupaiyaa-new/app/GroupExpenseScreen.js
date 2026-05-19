@@ -17,7 +17,7 @@ import Header from '../src/components/Header';
 import { AuthContext } from '../src/context/AuthContext';
 import { ThemeContext } from '../src/context/ThemeContext';
 
-const API_BASE_URL = 'http://127.0.0.1:8000';
+const API_BASE_URL = process.env.API_BASE_URL;
 
 const GroupExpenseScreen = () => {
   const { isLoggedIn, id } = useContext(AuthContext);
