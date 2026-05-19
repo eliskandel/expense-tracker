@@ -1,17 +1,17 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useIsFocused, useNavigation } from '@react-navigation/native';
-import { fetchEvents } from '../api/eventApi';
-import { fetchLendLogs } from '../api/lendApi';
-import AddLendModal from '../components/AddLendModal';
+import { fetchEvents } from '../src/api/eventApi';
+import { fetchLendLogs } from '../src/api/lendApi';
+import AddLendModal from '../src/components/AddLendModal';
 // import { LinearGradient } from 'expo-linear-gradient';
 import { useContext, useEffect, useState } from 'react';
 import { ActivityIndicator, Dimensions, Modal, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { BarChart, PieChart } from 'react-native-chart-kit';
-import ChatbotModal from '../components/ChatbotModal';
-import CustomHeader from '../components/CustomHeader';
-import { AuthContext } from '../context/AuthContext';
-import { ThemeContext } from '../context/ThemeContext';
+import ChatbotModal from '../src/components/ChatbotModal';
+import CustomHeader from '../src/components/CustomHeader';
+import { AuthContext } from '../src/context/AuthContext';
+import { ThemeContext } from '../src/context/ThemeContext';
 const API_BASE_URL = 'http://127.0.0.1:8000';
 const screenWidth = Dimensions.get('window').width;
 

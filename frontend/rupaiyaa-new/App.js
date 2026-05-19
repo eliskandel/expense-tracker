@@ -1,153 +1,157 @@
-import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { NavigationContainer } from '@react-navigation/native';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { useContext } from 'react';
-// CHANGE: Import StatusBar
-import { StatusBar, View } from 'react-native';
-import { AuthContext, AuthProvider } from './src/context/AuthContext';
-import { ThemeContext, ThemeProvider } from './src/context/ThemeContext';
+import React, { useContext } from "react";
+import { StatusBar, View } from "react-native";
 
-import AddScreen from './src/screens/AddScreen';
-import EventExpenseScreen from './src/screens/EventExpenseScreen';
-import EventScreen from './src/screens/EventScreen';
-import GroupExpenseScreen from './src/screens/GroupExpenseScreen';
-import GroupsScreen from './src/screens/GroupsScreen';
-import HistoryScreen from './src/screens/HistoryScreen';
-import HomeScreen from './src/screens/HomeScreen';
-import LearnScreen from './src/screens/LearnScreen';
-import LoginScreen from './src/screens/LoginScreen';
-import NotificationsScreen from './src/screens/NotificationsScreen';
-import ProfileScreen from './src/screens/ProfileScreen';
+import { NavigationContainer } from "@react-navigation/native";
+import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 
-import './global.css';
+import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
+
+import { AuthProvider, AuthContext } from "./src/context/AuthContext";
+import { ThemeProvider, ThemeContext } from "./src/context/ThemeContext";
+
+// Screens
+import LoginScreen from "./app/LoginScreen";
+import HomeScreen from "./app/HomeScreen";
+import GroupsScreen from "./app/GroupsScreen";
+import LearnScreen from "./app/LearnScreen";
+import ProfileScreen from "./app/ProfileScreen";
+import NotificationsScreen from "./app/NotificationsScreen";
+import EventScreen from "./app/EventScreen";
+import EventExpenseScreen from "./app/EventExpenseScreen";
+import GroupExpenseScreen from "./app/GroupExpenseScreen";
+import AddScreen from "./app/AddScreen";
+import SetBudgetGoal from "./app/SetBudgetGoal";
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 
-// No changes are needed in MainTabs, as it already uses the context correctly
-// for its custom styling. The navigation theme will handle the defaults,
-// and your custom styles will apply on top.
 function MainTabs() {
-    const { colors, isDarkMode } = useContext(ThemeContext);
+  return (
+    <Tab.Navigator
+      screenOptions={{
+        headerShown: false,
+      }}
+    >
+      <Tab.Screen
+        name="Home"
+        component={HomeScreen}
+        options={{
+          tabBarIcon: ({ color, size }) => (
+            <MaterialCommunityIcons
+              name="home-outline"
+              color={color}
+              size={size}
+            />
+          ),
+        }}
+      />
 
-    return (
-        <Tab.Navigator
-            screenOptions={{
-                headerShown: false,
-                tabBarShowLabel: false,
-                tabBarStyle: {
-                    backgroundColor: colors.cardBackground, // This correctly uses your theme
-                    borderTopWidth: 0,
-                    height: 60,
-                    paddingTop: 10,
-                },
-                tabBarActiveTintColor: colors.primary,
-                tabBarInactiveTintColor: colors.subtext,
-            }}
-        >
-            <Tab.Screen
-                name="Home"
-                component={HomeScreen}
-                options={{
-                    tabBarIcon: ({ color, size }) => (
-                        <MaterialCommunityIcons name="home-outline" color={color} size={size} />
-                    ),
-                }}
+      <Tab.Screen
+        name="AddExpense"
+        component={AddExpenseScreen}
+        options={{
+          tabBarLabel: "",
+          tabBarIcon: () => (
+            <View
+              style={{
+                backgroundColor: "#6D28D9",
+                width: 64,
+                height: 64,
+                borderRadius: 32,
+                justifyContent: "center",
+                alignItems: "center",
+                marginTop: -20,
+              }}
+            >
+              <MaterialCommunityIcons
+                name="plus"
+                color="#FFFFFF"
+                size={32}
+              />
+            </View>
+          ),
+        }}
+      />
+
+      <Tab.Screen
+        name="Groups"
+        component={GroupsScreen}
+        options={{
+          tabBarIcon: ({ color, size }) => (
+            <MaterialCommunityIcons
+              name="account-group-outline"
+              color={color}
+              size={size}
             />
-            <Tab.Screen
-                name="History"
-                component={HistoryScreen}
-                options={{
-                    tabBarIcon: ({ color, size }) => (
-                        <MaterialCommunityIcons name="history" color={color} size={size} />
-                    ),
-                }}
+          ),
+        }}
+      />
+
+      <Tab.Screen
+        name="Learn"
+        component={LearnScreen}
+        options={{
+          tabBarIcon: ({ color, size }) => (
+            <MaterialCommunityIcons
+              name="book-open-outline"
+              color={color}
+              size={size}
             />
-            <Tab.Screen
-                name="Add"
-                component={AddScreen}
-                options={{
-                    tabBarIcon: () => (
-                        <View className="bg-purple-700 w-16 h-16 rounded-full items-center justify-center -top-4 shadow-md">
-                            <MaterialCommunityIcons name="plus" color="#FFFFFF" size={32} />
-                        </View>
-                    ),
-                }}
-            />
-            <Tab.Screen
-                name="Groups"
-                component={GroupsScreen}
-                options={{
-                    tabBarIcon: ({ color, size }) => (
-                        <MaterialCommunityIcons name="account-group-outline" color={color} size={size} />
-                    ),
-                }}
-            />
-            <Tab.Screen
-                name="Learn"
-                component={LearnScreen}
-                options={{
-                    tabBarIcon: ({ color, size }) => (
-                        <MaterialCommunityIcons name="book-open-outline" color={color} size={size} />
-                    ),
-                }}
-            />
-        </Tab.Navigator>
-    );
+          ),
+        }}
+      />
+    </Tab.Navigator>
+  );
 }
 
 function AppNavigation() {
-    const { isLoggedIn } = useContext(AuthContext);
-    // CHANGE: Destructure `navigationTheme` from the ThemeContext
-    const { isDarkMode, navigationTheme } = useContext(ThemeContext);
+  const { isLoggedIn } = useContext(AuthContext);
+  const { isDarkMode, navigationTheme } = useContext(ThemeContext);
 
-    // CHANGE: Determine the status bar style based on the theme
-    const barStyle = isDarkMode ? 'light-content' : 'dark-content';
+  const barStyle = isDarkMode ? "light-content" : "dark-content";
 
-    // Lazy import to avoid circular dependency
-    const SetBudgetGoal = require('./src/screens/SetBudgetGoal').default;
-    
-    return (
-        // CHANGE: Pass the dynamic navigationTheme to the container
-        <NavigationContainer theme={navigationTheme}>
-            {/* CHANGE: Add the StatusBar component to sync with the theme */}
-            <StatusBar barStyle={barStyle} backgroundColor={navigationTheme.colors.card} />
+  return (
+    <NavigationContainer theme={navigationTheme}>
+      <StatusBar
+        barStyle={barStyle}
+        backgroundColor={navigationTheme.colors.card}
+      />
 
-            <Stack.Navigator 
-                // You can still keep headerShown: false if you have custom headers,
-                // but if you want to use the navigator's built-in header,
-                // removing this will allow the theme to style it automatically.
-                screenOptions={{ headerShown: false }}
-            >
-                {isLoggedIn ? (
-                    <>
-                        <Stack.Screen name="Main" component={MainTabs} />
-                        <Stack.Screen name="Profile" component={ProfileScreen} />
-                        <Stack.Screen name="SetBudgetGoal" component={SetBudgetGoal} />
-                        <Stack.Screen name="GroupExpense" component={GroupExpenseScreen} />
-                        <Stack.Screen name="Notifications" component={NotificationsScreen} />
-                        <Stack.Screen name="EventScreen" component={EventScreen} />
-                        <Stack.Screen name="EventExpenseScreen" component={EventExpenseScreen} />
-                    </>
-                ) : (
-                    <Stack.Screen name="Auth" component={LoginScreen} />
-                )}
-            </Stack.Navigator>
-        </NavigationContainer>
-    );
+      <Stack.Navigator screenOptions={{ headerShown: false }}>
+        {isLoggedIn ? (
+          <>
+            <Stack.Screen name="Main" component={MainTabs} />
+            <Stack.Screen name="Profile" component={ProfileScreen} />
+            <Stack.Screen name="SetBudgetGoal" component={SetBudgetGoal} />
+            <Stack.Screen
+              name="GroupExpense"
+              component={GroupExpenseScreen}
+            />
+            <Stack.Screen
+              name="Notifications"
+              component={NotificationsScreen}
+            />
+            <Stack.Screen name="EventScreen" component={EventScreen} />
+            <Stack.Screen
+              name="EventExpenseScreen"
+              component={EventExpenseScreen}
+            />
+          </>
+        ) : (
+          <Stack.Screen name="Auth" component={LoginScreen} />
+        )}
+      </Stack.Navigator>
+    </NavigationContainer>
+  );
 }
 
-// The main App component wraps everything in providers
 export default function App() {
-    return (
-        // CHANGE: Swapped provider order for better dependency management.
-        // It's best practice for providers that depend on others (Theme -> Auth)
-        // to be nested inside the ones they depend on.
-        <AuthProvider>
-            <ThemeProvider>
-                <AppNavigation />
-            </ThemeProvider>
-        </AuthProvider>
-    );
+  return (
+    <AuthProvider>
+      <ThemeProvider>
+        <AppNavigation />
+      </ThemeProvider>
+    </AuthProvider>
+  );
 }

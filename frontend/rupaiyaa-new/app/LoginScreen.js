@@ -4,7 +4,7 @@ import { useNavigation } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
 import { useContext, useState } from 'react';
 import { ActivityIndicator, Alert, Image, ScrollView, Text, TextInput, TouchableOpacity, View, } from 'react-native';
-import { AuthContext } from '../context/AuthContext';
+import { AuthContext } from '../src/context/AuthContext';
 
 const API_BASE_URL = 'http://127.0.0.1:8000'; // Your current API Base URL
 
@@ -299,7 +299,7 @@ const LoginScreen = () => {
           {/* App Logo */}
           <View className="items-center mb-6">
             <Image
-              source={require('../../assets/Expense Tracer.png')}
+              source={require('../assets/Expense Tracer.png')}
               style={{ width: 64, height: 64, borderRadius: 32 }}
               resizeMode="contain"
             />

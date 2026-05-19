@@ -2,7 +2,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, ScrollView, Text, TouchableOpacity, View } from 'react-native';
-import { fetchNotifications, fetchUnreadCount, markAllNotificationsRead, markNotificationRead } from '../api/notificationApi';
+import { fetchNotifications, fetchUnreadCount, markAllNotificationsRead, markNotificationRead } from '../src/api/notificationApi';
 
 const NotificationsScreen = () => {
   const [notifications, setNotifications] = useState([]);

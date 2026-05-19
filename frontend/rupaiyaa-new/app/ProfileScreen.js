@@ -2,10 +2,10 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useContext, useEffect, useState } from 'react';
 import { ActivityIndicator, Image, ScrollView, Switch, Text, TouchableOpacity, View } from 'react-native';
-import EditProfileModal from '../components/EditProfileModal';
-import Header from '../components/Header';
-import { AuthContext } from '../context/AuthContext';
-import { ThemeContext } from '../context/ThemeContext';
+import EditProfileModal from '../src/components/EditProfileModal';
+import Header from '../src/components/Header';
+import { AuthContext } from '../src/context/AuthContext';
+import { ThemeContext } from '../src/context/ThemeContext';
 
 const getInitial = (name) => {
     if (!name) return '';

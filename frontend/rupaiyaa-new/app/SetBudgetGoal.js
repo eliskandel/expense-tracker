@@ -2,7 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useEffect, useState } from 'react';
 import { Alert, Platform, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import CustomHeader from '../components/CustomHeader';
+import CustomHeader from '../src/components/CustomHeader';
 
 const getCurrentMonth = () => {
   const now = new Date();

@@ -13,10 +13,10 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import CustomHeader from '../components/CustomHeader';
-import GroupList from '../components/GroupList';
-import { AuthContext } from '../context/AuthContext';
-import { ThemeContext } from '../context/ThemeContext';
+import CustomHeader from '../src/components/CustomHeader';
+import GroupList from '../src/components/GroupList';
+import { AuthContext } from '../src/context/AuthContext';
+import { ThemeContext } from '../src/context/ThemeContext';
 
 const API_BASE_URL = 'http://127.0.0.1:8000';
 

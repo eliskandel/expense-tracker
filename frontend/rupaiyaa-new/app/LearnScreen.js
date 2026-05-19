@@ -1,8 +1,8 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useContext, useState } from 'react';
 import { LayoutAnimation, Linking, Platform, ScrollView, Text, TouchableOpacity, UIManager, View } from 'react-native';
-import CustomHeader from '../components/CustomHeader';
-import { ThemeContext } from '../context/ThemeContext';
+// import CustomHeader from '../components/CustomHeader';
+import { ThemeContext } from '../src/context/ThemeContext';
 
 if (
     Platform.OS === 'android' &&

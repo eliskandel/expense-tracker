@@ -2,7 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import { createEvent, fetchEvents } from '../api/eventApi';
+import { createEvent, fetchEvents } from '../src/api/eventApi';
 
 const EventScreen = () => {
   const navigation = useNavigation();
