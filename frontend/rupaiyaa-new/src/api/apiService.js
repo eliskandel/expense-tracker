@@ -1,8 +1,9 @@
 // rupaiyaa-new/src/api/apiService.js
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import Constants from 'expo-constants';
 
-// !!! IMPORTANT: Ensure this matches your Django backend URL !!!
-const API_BASE_URL = 'http://127.0.0.1:8000';
+// Get API base URL from environment variables
+const API_BASE_URL = process.env.API_BASE_URL || Constants.expoConfig?.extra?.apiBaseUrl || 'http://127.0.0.1:8000';
 
 // Helper function for making authenticated fetch requests
 const authenticatedFetch = async (url, options = {}) => {
